@@ -69,7 +69,7 @@ function parseCSV(text) {
     return rows;
 }
 
-// --- Dynamic Stats Calculator using ticks.csv Schema ---
+// --- Dynamic Stats Calculator ---
 function processTickList(ticks) {
     let totalElevationFeet = 0;
     let totalPitches = 0;
@@ -82,45 +82,44 @@ function processTickList(ticks) {
     const typeCounts = { Sport: 0, Trad: 0, Boulder: 0 };
 
     ticks.forEach(tick => {
-        // 1. Pitches & Elevation (Length column)
+        // Pitches & Elevation (Length column)
         const pitches = parseInt(tick['Pitches'] || 1, 10);
         const length = parseInt(tick['Length'] || 0, 10);
         
         totalPitches += isNaN(pitches) ? 1 : pitches;
         totalElevationFeet += isNaN(length) ? 0 : length;
 
-        // 2. Hardest Send via Rating Code
+        // Hardest Send using Rating Code
         const ratingCode = parseInt(tick['Rating Code'] || 0, 10);
         if (ratingCode > highestRatingCode) {
             highestRatingCode = ratingCode;
             maxGrade = tick['Rating'] || 'Unknown';
             maxRouteName = tick['Route'] || 'Unknown Route';
             
-            // Extract primary area from Location string (e.g., "Washington > ...")
             const rawLoc = tick['Location'] || '';
             maxRouteLocation = rawLoc.split('>')[0].trim() || 'Crag';
         }
 
-        // 3. Crag Counts
+        // Crag Counts
         const mainCrag = (tick['Location'] || '').split('>')[0]?.trim() || 'Other';
         if (mainCrag) {
             cragMap[mainCrag] = (cragMap[mainCrag] || 0) + 1;
         }
 
-        // 4. Style Analysis via Route Type
+        // Style Analysis
         const routeType = tick['Route Type'] || '';
         if (routeType.includes('Sport')) typeCounts.Sport++;
         else if (routeType.includes('Trad')) typeCounts.Trad++;
         else if (routeType.includes('Boulder')) typeCounts.Boulder++;
     });
 
-    // Sort Top Crags
+    // Top Crags
     const topCrags = Object.entries(cragMap)
         .sort((a, b) => b[1] - a[1])
         .slice(0, 4)
         .map(([name, count]) => ({ name, value: `${count} pitches` }));
 
-    // Calculate Personas
+    // Personas
     const totalStyles = typeCounts.Sport + typeCounts.Trad + typeCounts.Boulder || 1;
     const sportPct = Math.round((typeCounts.Sport / totalStyles) * 100);
     const tradPct = Math.round((typeCounts.Trad / totalStyles) * 100);
@@ -142,9 +141,41 @@ function processTickList(ticks) {
     };
 }
 
+// --- Extract Export URL from User Input ---
+function extractExportUrl(userInput) {
+    let input = userInput.trim();
+    if (!input) return null;
+
+    if (!input.startsWith('http://') && !input.startsWith('https://')) {
+        input = 'https://' + input;
+    }
+
+    try {
+        const url = new URL(input);
+        const pathParts = url.pathname.split('/').filter(Boolean);
+
+        // Expect path starting with "user/{id}/{slug}"
+        if (pathParts[0] === 'user' && pathParts.length >= 3) {
+            const userId = pathParts[1];
+            const userSlug = pathParts[2];
+            return `https://www.mountainproject.com/user/${userId}/${userSlug}/tick-export`;
+        }
+    } catch (e) {
+        return null;
+    }
+
+    return null;
+}
+
 // --- Fetch User Ticks via Public CORS Proxy ---
-async function fetchUserTicks(usernameOrId) {
-    const targetUrl = `https://www.mountainproject.com/user/${usernameOrId}/tick-export`;
+async function fetchUserTicks(inputUrl) {
+    const targetUrl = extractExportUrl(inputUrl);
+
+    if (!targetUrl) {
+        alert('Invalid Mountain Project URL.\n\nPlease paste a full link like:\nhttps://www.mountainproject.com/user/200857562/chosslord-supreme');
+        return;
+    }
+
     const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
 
     fetchUserBtn.textContent = 'Fetching...';
@@ -152,23 +183,20 @@ async function fetchUserTicks(usernameOrId) {
 
     try {
         const response = await fetch(proxyUrl);
-        if (!response.ok) throw new Error('Could not fetch user data');
+        if (!response.ok) throw new Error('Network response was not ok');
         
         const csvText = await response.text();
         const rows = parseCSV(csvText);
         
-        if (rows.length === 0) {
-            alert('No ticks found for this user or export URL restricted.');
-            fetchUserBtn.textContent = 'Go';
-            fetchUserBtn.disabled = false;
+        if (!rows || rows.length === 0) {
+            alert('No ticks found or user ticks are private.');
             return;
         }
 
         const stats = processTickList(rows);
         startWrapped(stats);
     } catch (err) {
-        alert('Could not fetch public ticks. Using sample data instead.');
-        startWrapped(sampleData);
+        alert('Could not fetch ticks from that profile URL. Try downloading your ticks.csv and uploading directly!');
     } finally {
         fetchUserBtn.textContent = 'Go';
         fetchUserBtn.disabled = false;
@@ -242,9 +270,9 @@ csvInput.addEventListener('change', (e) => {
 });
 
 fetchUserBtn.addEventListener('click', () => {
-    const user = usernameInput.value.trim();
-    if (!user) return alert('Please enter a username or MP user ID.');
-    fetchUserTicks(user);
+    const input = usernameInput.value.trim();
+    if (!input) return alert('Please paste your Mountain Project profile URL.');
+    fetchUserTicks(input);
 });
 
 demoBtn.addEventListener('click', () => {

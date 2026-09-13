@@ -1,15 +1,15 @@
-/* Landing Screen */
+/* Landing Screen Base */
 .landing-screen {
     position: absolute;
     inset: 0;
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    background: radial-gradient(circle at top right, #1e293b, #0f172a);
     z-index: 100;
     display: flex;
-    flex-direction: column;
     justify-content: center;
     align-items: center;
-    padding: 32px 24px;
-    transition: opacity 0.5s ease, visibility 0.5s ease;
+    padding: 24px;
+    transition: opacity 0.4s ease, visibility 0.4s ease;
+    overflow-y: auto;
 }
 
 .landing-screen:not(.active) {
@@ -20,55 +20,96 @@
 
 .landing-content {
     width: 100%;
+    max-width: 420px;
     text-align: center;
+    margin: auto;
 }
 
+.landing-content .title {
+    font-size: 2.2rem;
+    font-weight: 900;
+    line-height: 1.1;
+    margin-bottom: 8px;
+    background: linear-gradient(135deg, #ffffff 0%, #a5f3fc 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.landing-content .subtitle {
+    font-size: 0.85rem;
+    font-weight: 800;
+    letter-spacing: 2px;
+    color: #38bdf8;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+/* Form Cards */
 .input-card {
-    background: rgba(255, 255, 255, 0.07);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(12px);
+    border-radius: 20px;
     padding: 20px;
-    margin-bottom: 16px;
+    margin-bottom: 12px;
     text-align: left;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
 .input-card h3 {
-    font-size: 1rem;
-    margin-bottom: 6px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #f8fafc;
+    margin-bottom: 4px;
 }
 
 .input-desc {
-    font-size: 0.85rem;
-    opacity: 0.7;
+    font-size: 0.78rem;
+    color: #94a3b8;
     margin-bottom: 14px;
+    line-height: 1.3;
 }
 
+/* File Upload Controls */
 .file-btn {
-    display: inline-block;
-    background: #00e676;
-    color: #000;
+    display: block;
+    width: 100%;
+    text-align: center;
+    background: #10b981;
+    color: #0f172a;
     font-weight: 700;
-    padding: 10px 18px;
-    border-radius: 30px;
+    padding: 12px 16px;
+    border-radius: 12px;
     cursor: pointer;
-    font-size: 0.9rem;
+    font-size: 0.88rem;
+    transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.file-btn:hover {
+    background: #34d399;
+    transform: translateY(-1px);
 }
 
 .file-name {
     display: block;
-    font-size: 0.8rem;
-    opacity: 0.6;
+    font-size: 0.75rem;
+    color: #64748b;
     margin-top: 8px;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .divider {
     font-weight: 800;
-    font-size: 0.8rem;
-    opacity: 0.4;
+    font-size: 0.75rem;
+    color: #475569;
     margin: 12px 0;
     letter-spacing: 2px;
 }
 
+/* URL Input & Button */
 .input-group {
     display: flex;
     gap: 8px;
@@ -76,30 +117,47 @@
 
 .input-group input {
     flex: 1;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 30px;
-    padding: 10px 16px;
-    color: #fff;
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    padding: 10px 14px;
+    color: #f8fafc;
+    font-size: 0.85rem;
     outline: none;
+    transition: border-color 0.2s ease;
+}
+
+.input-group input:focus {
+    border-color: #38bdf8;
 }
 
 .action-btn-sm {
-    background: #00c6ff;
+    background: #0284c7;
     border: none;
-    color: #fff;
+    color: #ffffff;
     font-weight: 700;
-    padding: 0 20px;
-    border-radius: 30px;
+    padding: 0 18px;
+    border-radius: 12px;
     cursor: pointer;
+    font-size: 0.88rem;
+    transition: background 0.2s ease;
+}
+
+.action-btn-sm:hover {
+    background: #0369a1;
 }
 
 .demo-btn {
     background: transparent;
     border: none;
-    color: rgba(255, 255, 255, 0.6);
+    color: #64748b;
+    font-size: 0.82rem;
     text-decoration: underline;
-    margin-top: 16px;
+    margin-top: 12px;
     cursor: pointer;
-    font-size: 0.9rem;
+    transition: color 0.2s ease;
+}
+
+.demo-btn:hover {
+    color: #94a3b8;
 }
