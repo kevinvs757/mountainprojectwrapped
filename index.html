@@ -9,6 +9,38 @@
 <body>
 
     <div class="app-container">
+        <!-- Input / Landing Screen -->
+        <div class="landing-screen active" id="landingScreen">
+            <div class="landing-content">
+                <p class="subtitle">2026 Edition</p>
+                <h1 class="title">Mountain Project<br>Wrapped</h1>
+                <p class="stat-label" style="margin-bottom: 30px;">See your climbing year in review.</p>
+
+                <!-- CSV Upload Option -->
+                <div class="input-card">
+                    <h3>Option 1: Upload CSV</h3>
+                    <p class="input-desc">Export your ticks file from Mountain Project profile.</p>
+                    <label class="file-btn" for="csvInput">Choose ticks.csv</label>
+                    <input type="file" id="csvInput" accept=".csv" style="display: none;">
+                    <span class="file-name" id="fileName">No file selected</span>
+                </div>
+
+                <div class="divider">OR</div>
+
+                <!-- Username Option -->
+                <div class="input-card">
+                    <h3>Option 2: Enter Username</h3>
+                    <div class="input-group">
+                        <input type="text" id="usernameInput" placeholder="e.g. Alex Honnold or ID">
+                        <button class="action-btn-sm" id="fetchUserBtn">Go</button>
+                    </div>
+                </div>
+
+                <!-- Demo Button -->
+                <button class="demo-btn" id="demoBtn">Use Sample Data</button>
+            </div>
+        </div>
+
         <!-- Progress Bars -->
         <div class="progress-container" id="progressContainer"></div>
 
