@@ -1,117 +1,171 @@
-// --- Sample Climbing Data ---
-const sampleData = {
-    totalElevationFeet: 14850,
-    totalPitches: 142,
-    maxGrade: "5.12a",
-    maxRouteName: "Optimator",
-    maxRouteLocation: "Red Rocks, NV",
-    topCrags: [
-        { name: "Red River Gorge", pitches: 48 },
-        { name: "Smith Rock", pitches: 35 },
-        { name: "Red Rocks", pitches: 29 },
-        { name: "New River Gorge", pitches: 18 }
-    ],
-    persona: "Crimp Enthusiast"
-};
+// --- Card Data Array ---
+const cardsData = [
+    {
+        id: "welcome",
+        theme: "bg-sunset",
+        subtitle: "2026 Season",
+        title: "Mountain Project<br>Wrapped",
+        statLabel: "Tap right to see your year in numbers 🧗",
+        type: "intro"
+    },
+    {
+        id: "elevation",
+        theme: "bg-emerald",
+        subtitle: "Vertical Gain",
+        bigStat: 14850,
+        statSuffix: " ft",
+        statLabel: "Vertical Feet Climbed",
+        secondaryText: "Across 142 Pitches",
+        type: "counter"
+    },
+    {
+        id: "maxGrade",
+        theme: "bg-nebula",
+        subtitle: "Peak Performance",
+        title: "Hardest Send",
+        bigStatDisplay: "5.12a",
+        statLabel: '"Optimator" • Red Rocks, NV',
+        type: "standard"
+    },
+    {
+        id: "topCrags",
+        theme: "bg-berry",
+        subtitle: "Favorite Haunts",
+        title: "Top Crags",
+        list: [
+            { name: "Red River Gorge", value: "48 pitches" },
+            { name: "Smith Rock", value: "35 pitches" },
+            { name: "Red Rocks", value: "29 pitches" },
+            { name: "New River Gorge", value: "18 pitches" }
+        ],
+        type: "list"
+    },
+    {
+        id: "persona",
+        theme: "bg-electric",
+        subtitle: "Your Climbing Identity",
+        title: "You Are A",
+        badge: "Crimp Enthusiast",
+        statLabel: "82% Sport • 18% Trad",
+        showRestartBtn: true,
+        type: "summary"
+    }
+];
 
-// --- State Variables ---
-let currentSlide = 0;
-const slides = document.querySelectorAll('.slide');
-const totalSlides = slides.length;
-const slideDuration = 5000; // 5 seconds per slide
-let slideTimer = null;
+// --- Engine State ---
+let currentSlideIndex = 0;
+const slideDuration = 5000;
 let progressInterval = null;
 let startTime = 0;
 
-// --- DOM Elements ---
+const deckContainer = document.getElementById('storyDeck');
 const progressContainer = document.getElementById('progressContainer');
-const navLeft = document.getElementById('navLeft');
-const navRight = document.getElementById('navRight');
-const restartBtn = document.getElementById('restartBtn');
 
-// --- Initialize UI ---
-function init() {
-    // Populate Progress Bar elements
+// --- Render Cards dynamically from objects ---
+function renderDeck() {
+    deckContainer.innerHTML = '';
     progressContainer.innerHTML = '';
-    for (let i = 0; i < totalSlides; i++) {
+
+    cardsData.forEach((card, i) => {
+        // Build Progress Bar
         const bar = document.createElement('div');
         bar.className = 'progress-bar';
         bar.innerHTML = `<div class="progress-fill" id="fill-${i}"></div>`;
         progressContainer.appendChild(bar);
-    }
 
-    // Populate Sample Data into DOM
-    document.getElementById('pitchStat').textContent = `Across ${sampleData.totalPitches} Pitches`;
-    document.getElementById('maxGradeStat').textContent = sampleData.maxGrade;
-    document.getElementById('maxGradeRoute').textContent = `"${sampleData.maxRouteName}" • ${sampleData.maxRouteLocation}`;
-    document.getElementById('personaBadge').textContent = sampleData.persona;
+        // Build Card HTML based on Type
+        const slideEl = document.createElement('section');
+        slideEl.className = `card-slide ${card.theme} ${i === 0 ? 'active' : ''}`;
+        slideEl.id = `slide-${i}`;
 
-    // Render Crag List
-    const cragListEl = document.getElementById('cragList');
-    cragListEl.innerHTML = sampleData.topCrags.map((crag, idx) => `
-        <div class="list-item">
-            <span>${idx + 1}. ${crag.name}</span>
-            <span>${crag.pitches} pitches</span>
-        </div>
-    `).join('');
+        let innerHTML = `<p class="subtitle anim-element anim-1">${card.subtitle || ''}</p>`;
+
+        if (card.title) {
+            innerHTML += `<h2 class="title anim-element anim-2">${card.title}</h2>`;
+        }
+
+        if (card.type === 'counter') {
+            innerHTML += `<div class="big-stat anim-element anim-2" id="stat-counter-${i}">0</div>`;
+        } else if (card.bigStatDisplay) {
+            innerHTML += `<div class="big-stat anim-element anim-2">${card.bigStatDisplay}</div>`;
+        }
+
+        if (card.badge) {
+            innerHTML += `<div class="badge anim-element anim-3">${card.badge}</div>`;
+        }
+
+        if (card.list) {
+            const listItems = card.list.map((item, idx) => `
+                <div class="card-list-item">
+                    <span>${idx + 1}. ${item.name}</span>
+                    <span>${item.value}</span>
+                </div>
+            `).join('');
+            innerHTML += `<div class="card-list anim-element anim-3">${listItems}</div>`;
+        }
+
+        if (card.statLabel) {
+            innerHTML += `<p class="stat-label anim-element anim-3">${card.statLabel}</p>`;
+        }
+
+        if (card.secondaryText) {
+            innerHTML += `<p class="subtitle anim-element anim-3" style="margin-top:20px;">${card.secondaryText}</p>`;
+        }
+
+        if (card.showRestartBtn) {
+            innerHTML += `<button class="action-btn anim-element anim-3" onclick="goToSlide(0)">Replay Story 🔄</button>`;
+        }
+
+        slideEl.innerHTML = innerHTML;
+        deckContainer.appendChild(slideEl);
+    });
 
     goToSlide(0);
 }
 
-// --- Slide Navigation ---
+// --- Card Navigation Engine ---
 function goToSlide(index) {
-    if (index < 0 || index >= totalSlides) return;
+    if (index < 0 || index >= cardsData.length) return;
 
-    // Clear active timers
-    clearTimeout(slideTimer);
     clearInterval(progressInterval);
+    currentSlideIndex = index;
 
-    currentSlide = index;
-
-    // Update Slide Active States
-    slides.forEach((slide, i) => {
-        slide.classList.toggle('active', i === currentSlide);
+    // Toggle active classes
+    cardsData.forEach((_, i) => {
+        const slide = document.getElementById(`slide-${i}`);
+        slide.classList.toggle('active', i === currentSlideIndex);
     });
 
-    // Update Progress Bar Fills
-    for (let i = 0; i < totalSlides; i++) {
+    // Sync Progress Fills
+    cardsData.forEach((_, i) => {
         const fill = document.getElementById(`fill-${i}`);
-        if (i < currentSlide) {
-            fill.style.width = '100%';
-        } else if (i > currentSlide) {
-            fill.style.width = '0%';
-        }
+        if (i < currentSlideIndex) fill.style.width = '100%';
+        else if (i > currentSlideIndex) fill.style.width = '0%';
+    });
+
+    // Run Counter Animation if Card Type is Counter
+    const card = cardsData[currentSlideIndex];
+    if (card.type === 'counter' && card.bigStat) {
+        animateCounter(`stat-counter-${currentSlideIndex}`, 0, card.bigStat, 1200, card.statSuffix || '');
     }
 
-    // Trigger Counter Animation on Elevation Slide
-    if (currentSlide === 1) {
-        animateCounter('elevationStat', 0, sampleData.totalElevationFeet, 1200);
-    }
-
-    // Start Auto-Advance Timer
     startProgress();
 }
 
 function nextSlide() {
-    if (currentSlide < totalSlides - 1) {
-        goToSlide(currentSlide + 1);
+    if (currentSlideIndex < cardsData.length - 1) {
+        goToSlide(currentSlideIndex + 1);
     } else {
-        // Pause auto-advance on last slide
-        document.getElementById(`fill-${totalSlides - 1}`).style.width = '100%';
+        document.getElementById(`fill-${cardsData.length - 1}`).style.width = '100%';
     }
 }
 
 function prevSlide() {
-    if (currentSlide > 0) {
-        goToSlide(currentSlide - 1);
-    } else {
-        goToSlide(0);
-    }
+    goToSlide(Math.max(0, currentSlideIndex - 1));
 }
 
-// --- Progress Bar Timer Animation ---
 function startProgress() {
-    const fill = document.getElementById(`fill-${currentSlide}`);
+    const fill = document.getElementById(`fill-${currentSlideIndex}`);
     startTime = Date.now();
 
     progressInterval = setInterval(() => {
@@ -126,31 +180,26 @@ function startProgress() {
     }, 30);
 }
 
-// --- Number Counter Animation ---
-function animateCounter(elementId, start, end, duration) {
-    const obj = document.getElementById(elementId);
+function animateCounter(id, start, end, duration, suffix = '') {
+    const obj = document.getElementById(id);
+    if (!obj) return;
     let startTimestamp = null;
     const step = (timestamp) => {
         if (!startTimestamp) startTimestamp = timestamp;
         const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-        obj.innerHTML = Math.floor(progress * (end - start) + start).toLocaleString() + ' ft';
-        if (progress < 1) {
-            window.requestAnimationFrame(step);
-        }
+        obj.innerHTML = Math.floor(progress * (end - start) + start).toLocaleString() + suffix;
+        if (progress < 1) window.requestAnimationFrame(step);
     };
     window.requestAnimationFrame(step);
 }
 
-// --- Event Listeners ---
-navRight.addEventListener('click', nextSlide);
-navLeft.addEventListener('click', prevSlide);
-restartBtn.addEventListener('click', () => goToSlide(0));
-
-// Keyboard Controls
+// Controls
+document.getElementById('navRight').addEventListener('click', nextSlide);
+document.getElementById('navLeft').addEventListener('click', prevSlide);
 document.addEventListener('keydown', (e) => {
     if (e.key === 'ArrowRight' || e.key === 'Space') nextSlide();
     if (e.key === 'ArrowLeft') prevSlide();
 });
 
-// Launch
-init();
+// Launch Engine
+renderDeck();

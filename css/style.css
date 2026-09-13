@@ -1,0 +1,212 @@
+:root {
+    --bg-dark: #0b0f19;
+    --text-main: #ffffff;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* App Frame */
+.app-container {
+    width: 100%;
+    max-width: 420px;
+    height: 100vh;
+    max-height: 880px;
+    position: relative;
+    background: #000;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+}
+
+@media (min-width: 480px) {
+    .app-container {
+        height: 90vh;
+        border-radius: 28px;
+    }
+}
+
+/* Progress Bars */
+.progress-container {
+    position: absolute;
+    top: 16px;
+    left: 12px;
+    right: 12px;
+    display: flex;
+    gap: 6px;
+    z-index: 50;
+}
+
+.progress-bar {
+    flex: 1;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    width: 0%;
+    background: #ffffff;
+    transition: width 0.1s linear;
+}
+
+/* Touch Nav Zones */
+.nav-zone {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 35%;
+    z-index: 40;
+}
+.nav-zone.left { left: 0; }
+.nav-zone.right { right: 0; width: 65%; }
+
+/* Card Deck & Slide Styling */
+.story-deck {
+    flex: 1;
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.card-slide {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 40px 28px;
+    text-align: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    transform: scale(0.95);
+}
+
+.card-slide.active {
+    opacity: 1;
+    pointer-events: auto;
+    transform: scale(1);
+}
+
+/* Gradient Backgrounds */
+.bg-sunset { background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%); }
+.bg-emerald { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+.bg-nebula { background: linear-gradient(135deg, #8e2de2 0%, #4a00e0 100%); }
+.bg-berry { background: linear-gradient(135deg, #f857a6 0%, #ff5858 100%); }
+.bg-electric { background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%); }
+
+/* Card Elements */
+.subtitle {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-weight: 800;
+    opacity: 0.85;
+    margin-bottom: 12px;
+}
+
+.title {
+    font-size: 2.3rem;
+    font-weight: 900;
+    line-height: 1.1;
+    margin-bottom: 20px;
+}
+
+.big-stat {
+    font-size: 4.2rem;
+    font-weight: 900;
+    line-height: 1;
+    margin: 16px 0;
+    letter-spacing: -2px;
+}
+
+.stat-label {
+    font-size: 1.1rem;
+    font-weight: 600;
+    opacity: 0.9;
+}
+
+/* List Component */
+.card-list {
+    width: 100%;
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.card-list-item {
+    background: rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(10px);
+    border-radius: 14px;
+    padding: 14px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+/* Badge Component */
+.badge {
+    background: #ffffff;
+    color: #000000;
+    padding: 14px 28px;
+    border-radius: 50px;
+    font-size: 1.4rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    margin: 16px 0;
+}
+
+.action-btn {
+    margin-top: 28px;
+    background: rgba(255, 255, 255, 0.25);
+    border: 2px solid #ffffff;
+    color: #ffffff;
+    padding: 12px 28px;
+    border-radius: 30px;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+/* Entrance Animations */
+.card-slide.active .anim-1 { animation: fadeInUp 0.5s ease 0.1s forwards; }
+.card-slide.active .anim-2 { animation: fadeInUp 0.5s ease 0.3s forwards; }
+.card-slide.active .anim-3 { animation: fadeInUp 0.5s ease 0.5s forwards; }
+
+.anim-element {
+    opacity: 0;
+    transform: translateY(20px);
+}
+
+@keyframes fadeInUp {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
