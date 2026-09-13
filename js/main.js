@@ -2,9 +2,11 @@
 const sampleData = {
     totalElevationFeet: 14850,
     totalPitches: 142,
-    maxGrade: "5.11b",
-    maxRouteName: "Spent",
-    maxRouteLocation: "Washington",
+    hardestSends: {
+        Sport: { grade: "5.11b", name: "Spent", location: "Washington" },
+        Trad: { grade: "5.10a", name: "Outer Space", location: "Leavenworth" },
+        Boulder: { grade: "V4", name: "Midnight Lightning", location: "Yosemite" }
+    },
     topCrags: [
         { name: "Washington", value: "4 pitches" },
         { name: "Red River Gorge", value: "35 pitches" },
@@ -12,7 +14,7 @@ const sampleData = {
         { name: "Red Rocks", value: "18 pitches" }
     ],
     persona: "Bolt Clipper",
-    styleRatio: "100% Sport • 0% Trad"
+    styleRatio: "80% Sport • 20% Trad"
 };
 
 // --- App State ---
@@ -73,31 +75,49 @@ function parseCSV(text) {
 function processTickList(ticks) {
     let totalElevationFeet = 0;
     let totalPitches = 0;
-    let highestRatingCode = -1;
-    let maxGrade = "N/A";
-    let maxRouteName = "N/A";
-    let maxRouteLocation = "N/A";
     
+    // Separate tracking for each category
+    const maxSends = {
+        Sport: { code: -1, grade: "N/A", name: "N/A", location: "N/A" },
+        Trad: { code: -1, grade: "N/A", name: "N/A", location: "N/A" },
+        Boulder: { code: -1, grade: "N/A", name: "N/A", location: "N/A" }
+    };
+
     const cragMap = {};
     const typeCounts = { Sport: 0, Trad: 0, Boulder: 0 };
 
     ticks.forEach(tick => {
-        // Pitches & Elevation (Length column)
+        // Pitches & Elevation
         const pitches = parseInt(tick['Pitches'] || 1, 10);
         const length = parseInt(tick['Length'] || 0, 10);
         
         totalPitches += isNaN(pitches) ? 1 : pitches;
         totalElevationFeet += isNaN(length) ? 0 : length;
 
-        // Hardest Send using Rating Code
+        // Categorize Route Type
+        const routeType = tick['Route Type'] || '';
+        let category = null;
+        if (routeType.includes('Sport')) {
+            category = 'Sport';
+            typeCounts.Sport++;
+        } else if (routeType.includes('Trad')) {
+            category = 'Trad';
+            typeCounts.Trad++;
+        } else if (routeType.includes('Boulder')) {
+            category = 'Boulder';
+            typeCounts.Boulder++;
+        }
+
+        // Hardest Send per category using Rating Code
         const ratingCode = parseInt(tick['Rating Code'] || 0, 10);
-        if (ratingCode > highestRatingCode) {
-            highestRatingCode = ratingCode;
-            maxGrade = tick['Rating'] || 'Unknown';
-            maxRouteName = tick['Route'] || 'Unknown Route';
-            
+        if (category && ratingCode > maxSends[category].code) {
             const rawLoc = tick['Location'] || '';
-            maxRouteLocation = rawLoc.split('>')[0].trim() || 'Crag';
+            maxSends[category] = {
+                code: ratingCode,
+                grade: tick['Rating'] || 'Unknown',
+                name: tick['Route'] || 'Unknown Route',
+                location: rawLoc.split('>')[0].trim() || 'Crag'
+            };
         }
 
         // Crag Counts
@@ -105,12 +125,6 @@ function processTickList(ticks) {
         if (mainCrag) {
             cragMap[mainCrag] = (cragMap[mainCrag] || 0) + 1;
         }
-
-        // Style Analysis
-        const routeType = tick['Route Type'] || '';
-        if (routeType.includes('Sport')) typeCounts.Sport++;
-        else if (routeType.includes('Trad')) typeCounts.Trad++;
-        else if (routeType.includes('Boulder')) typeCounts.Boulder++;
     });
 
     // Top Crags
@@ -130,18 +144,104 @@ function processTickList(ticks) {
     else if (typeCounts.Boulder > typeCounts.Sport) persona = "Pad Stacker";
 
     return {
-        totalElevationFeet: totalElevationFeet,
-        totalPitches: totalPitches,
-        maxGrade: maxGrade,
-        maxRouteName: maxRouteName,
-        maxRouteLocation: maxRouteLocation,
+        totalElevationFeet,
+        totalPitches,
+        hardestSends: {
+            Sport: maxSends.Sport.code !== -1 ? maxSends.Sport : null,
+            Trad: maxSends.Trad.code !== -1 ? maxSends.Trad : null,
+            Boulder: maxSends.Boulder.code !== -1 ? maxSends.Boulder : null
+        },
         topCrags: topCrags.length ? topCrags : sampleData.topCrags,
-        persona: persona,
+        persona,
         styleRatio: `${sportPct}% Sport • ${tradPct}% Trad`
     };
 }
 
-// --- Extract Export URL from User Input ---
+// --- Cards Data Generator ---
+function buildCardsFromStats(stats) {
+    const cards = [
+        {
+            id: "welcome",
+            theme: "bg-sunset",
+            subtitle: "2026 Season",
+            title: "Mountain Project<br>Wrapped",
+            statLabel: "Tap right to see your year in review 🧗",
+            type: "intro"
+        },
+        {
+            id: "elevation",
+            theme: "bg-emerald",
+            subtitle: "Vertical Gain",
+            bigStat: stats.totalElevationFeet,
+            statSuffix: " ft",
+            statLabel: "Vertical Feet Climbed",
+            secondaryText: `Across ${stats.totalPitches} Pitches`,
+            type: "counter"
+        }
+    ];
+
+    // Add cards for hardest sends if data exists
+    if (stats.hardestSends.Sport) {
+        cards.push({
+            id: "hardestSport",
+            theme: "bg-nebula",
+            subtitle: "Sport Peak",
+            title: "Hardest Sport Send",
+            bigStatDisplay: stats.hardestSends.Sport.grade,
+            statLabel: `"${stats.hardestSends.Sport.name}" • ${stats.hardestSends.Sport.location}`,
+            type: "standard"
+        });
+    }
+
+    if (stats.hardestSends.Trad) {
+        cards.push({
+            id: "hardestTrad",
+            theme: "bg-sunset",
+            subtitle: "Trad Peak",
+            title: "Hardest Trad Send",
+            bigStatDisplay: stats.hardestSends.Trad.grade,
+            statLabel: `"${stats.hardestSends.Trad.name}" • ${stats.hardestSends.Trad.location}`,
+            type: "standard"
+        });
+    }
+
+    if (stats.hardestSends.Boulder) {
+        cards.push({
+            id: "hardestBoulder",
+            theme: "bg-berry",
+            subtitle: "Bouldering Peak",
+            title: "Hardest Boulder",
+            bigStatDisplay: stats.hardestSends.Boulder.grade,
+            statLabel: `"${stats.hardestSends.Boulder.name}" • ${stats.hardestSends.Boulder.location}`,
+            type: "standard"
+        });
+    }
+
+    cards.push(
+        {
+            id: "topCrags",
+            theme: "bg-berry",
+            subtitle: "Favorite Haunts",
+            title: "Top Crags",
+            list: stats.topCrags,
+            type: "list"
+        },
+        {
+            id: "persona",
+            theme: "bg-electric",
+            subtitle: "Your Climbing Identity",
+            title: "You Are A",
+            badge: stats.persona,
+            statLabel: stats.styleRatio,
+            showRestartBtn: true,
+            type: "summary"
+        }
+    );
+
+    return cards;
+}
+
+// --- Extract Export URL ---
 function extractExportUrl(userInput) {
     let input = userInput.trim();
     if (!input) return null;
@@ -154,11 +254,8 @@ function extractExportUrl(userInput) {
         const url = new URL(input);
         const pathParts = url.pathname.split('/').filter(Boolean);
 
-        // Expect path starting with "user/{id}/{slug}"
         if (pathParts[0] === 'user' && pathParts.length >= 3) {
-            const userId = pathParts[1];
-            const userSlug = pathParts[2];
-            return `https://www.mountainproject.com/user/${userId}/${userSlug}/tick-export`;
+            return `https://www.mountainproject.com/user/${pathParts[1]}/${pathParts[2]}/tick-export`;
         }
     } catch (e) {
         return null;
@@ -167,7 +264,7 @@ function extractExportUrl(userInput) {
     return null;
 }
 
-// --- Fetch User Ticks via Public CORS Proxy ---
+// --- Fetch User Ticks ---
 async function fetchUserTicks(inputUrl) {
     const targetUrl = extractExportUrl(inputUrl);
 
@@ -196,65 +293,14 @@ async function fetchUserTicks(inputUrl) {
         const stats = processTickList(rows);
         startWrapped(stats);
     } catch (err) {
-        alert('Could not fetch ticks from that profile URL. Try downloading your ticks.csv and uploading directly!');
+        alert('Could not fetch ticks from that profile URL. Download your ticks.csv and upload directly!');
     } finally {
         fetchUserBtn.textContent = 'Go';
         fetchUserBtn.disabled = false;
     }
 }
 
-// --- Cards Data Generator ---
-function buildCardsFromStats(stats) {
-    return [
-        {
-            id: "welcome",
-            theme: "bg-sunset",
-            subtitle: "2026 Season",
-            title: "Mountain Project<br>Wrapped",
-            statLabel: "Tap right to see your year in review 🧗",
-            type: "intro"
-        },
-        {
-            id: "elevation",
-            theme: "bg-emerald",
-            subtitle: "Vertical Gain",
-            bigStat: stats.totalElevationFeet,
-            statSuffix: " ft",
-            statLabel: "Vertical Feet Climbed",
-            secondaryText: `Across ${stats.totalPitches} Pitches`,
-            type: "counter"
-        },
-        {
-            id: "maxGrade",
-            theme: "bg-nebula",
-            subtitle: "Peak Performance",
-            title: "Hardest Send",
-            bigStatDisplay: stats.maxGrade,
-            statLabel: `"${stats.maxRouteName}" • ${stats.maxRouteLocation}`,
-            type: "standard"
-        },
-        {
-            id: "topCrags",
-            theme: "bg-berry",
-            subtitle: "Favorite Haunts",
-            title: "Top Crags",
-            list: stats.topCrags,
-            type: "list"
-        },
-        {
-            id: "persona",
-            theme: "bg-electric",
-            subtitle: "Your Climbing Identity",
-            title: "You Are A",
-            badge: stats.persona,
-            statLabel: stats.styleRatio,
-            showRestartBtn: true,
-            type: "summary"
-        }
-    ];
-}
-
-// --- Event Handlers & File Loaders ---
+// --- Event Handlers & Loaders ---
 csvInput.addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -285,7 +331,7 @@ function startWrapped(stats) {
     renderDeck();
 }
 
-// --- Deck Render & Navigation Engines ---
+// --- Deck Render & Navigation Engine ---
 function renderDeck() {
     deckContainer.innerHTML = '';
     progressContainer.innerHTML = '';
@@ -407,7 +453,7 @@ function animateCounter(id, start, end, duration, suffix = '') {
     window.requestAnimationFrame(step);
 }
 
-// Controls
+// Navigation Events
 document.getElementById('navRight').addEventListener('click', nextSlide);
 document.getElementById('navLeft').addEventListener('click', prevSlide);
 document.addEventListener('keydown', (e) => {

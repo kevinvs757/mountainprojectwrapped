@@ -1,4 +1,41 @@
-/* Landing Screen Base */
+/* --- Reset & Global Box Sizing --- */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+body {
+    background-color: #030712;
+    color: #ffffff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    overflow: hidden;
+}
+
+/* --- Main Mobile Viewport Container --- */
+.app-container {
+    position: relative;
+    width: 100%;
+    max-width: 480px;
+    height: 100vh;
+    max-height: 850px;
+    background: #000000;
+    overflow: hidden;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+}
+
+@media (min-width: 500px) {
+    .app-container {
+        border-radius: 24px;
+        height: 90vh;
+    }
+}
+
+/* --- Landing Screen --- */
 .landing-screen {
     position: absolute;
     inset: 0;
@@ -44,7 +81,6 @@
     margin-bottom: 4px;
 }
 
-/* Form Cards */
 .input-card {
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.12);
@@ -70,7 +106,6 @@
     line-height: 1.3;
 }
 
-/* File Upload Controls */
 .file-btn {
     display: block;
     width: 100%;
@@ -109,7 +144,6 @@
     letter-spacing: 2px;
 }
 
-/* URL Input & Button */
 .input-group {
     display: flex;
     gap: 8px;
@@ -160,4 +194,190 @@
 
 .demo-btn:hover {
     color: #94a3b8;
+}
+
+/* --- Progress Bar Indicators --- */
+.progress-container {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    right: 16px;
+    display: flex;
+    gap: 6px;
+    z-index: 30;
+}
+
+.progress-bar {
+    flex: 1;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    width: 0%;
+    height: 100%;
+    background: #ffffff;
+    transition: width 0.05s linear;
+}
+
+/* --- Navigation Touch Zones --- */
+.nav-zone {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 40%;
+    z-index: 25;
+    cursor: pointer;
+}
+
+.nav-zone.left { left: 0; }
+.nav-zone.right { right: 0; }
+
+/* --- Story Deck & Cards --- */
+.story-deck {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.card-slide {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 40px 24px;
+    text-align: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    transform: scale(0.95);
+    box-sizing: border-box;
+}
+
+.card-slide.active {
+    opacity: 1;
+    visibility: visible;
+    transform: scale(1);
+    z-index: 10;
+}
+
+/* --- Color Themes --- */
+.bg-sunset { background: linear-gradient(135deg, #ff4e50 0%, #f9d423 100%); color: #fff; }
+.bg-emerald { background: linear-gradient(135deg, #059669 0%, #10b981 50%, #34d399 100%); color: #fff; }
+.bg-nebula { background: linear-gradient(135deg, #4c1d95 0%, #7c3aed 50%, #c084fc 100%); color: #fff; }
+.bg-berry { background: linear-gradient(135deg, #831843 0%, #db2777 50%, #f472b6 100%); color: #fff; }
+.bg-electric { background: linear-gradient(135deg, #0284c7 0%, #2563eb 50%, #4f46e5 100%); color: #fff; }
+
+/* --- Typography & Elements --- */
+.card-slide .subtitle {
+    font-size: 0.9rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    opacity: 0.9;
+    margin-bottom: 8px;
+}
+
+.card-slide .title {
+    font-size: 2.5rem;
+    font-weight: 900;
+    line-height: 1.15;
+    margin-bottom: 16px;
+    text-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.big-stat {
+    font-size: 4.5rem;
+    font-weight: 900;
+    line-height: 1;
+    margin: 20px 0;
+    letter-spacing: -1px;
+    text-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+}
+
+.stat-label {
+    font-size: 1.1rem;
+    font-weight: 600;
+    opacity: 0.95;
+    max-width: 90%;
+    line-height: 1.4;
+}
+
+.badge {
+    display: inline-block;
+    background: #ffffff;
+    color: #000000;
+    font-weight: 900;
+    font-size: 1.8rem;
+    padding: 12px 28px;
+    border-radius: 50px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    margin: 20px 0;
+    transform: rotate(-2deg);
+}
+
+.card-list {
+    width: 100%;
+    max-width: 320px;
+    background: rgba(0, 0, 0, 0.25);
+    backdrop-filter: blur(8px);
+    border-radius: 16px;
+    padding: 12px 16px;
+    margin: 20px 0;
+}
+
+.card-list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    font-size: 1rem;
+    font-weight: 700;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.card-list-item:last-child {
+    border-bottom: none;
+}
+
+.action-btn {
+    background: #ffffff;
+    color: #000000;
+    border: none;
+    font-weight: 800;
+    font-size: 0.95rem;
+    padding: 14px 28px;
+    border-radius: 30px;
+    cursor: pointer;
+    margin-top: 24px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+    transition: transform 0.2s ease;
+}
+
+.action-btn:hover {
+    transform: scale(1.04);
+}
+
+/* --- Slide Animations --- */
+.card-slide.active .anim-element {
+    animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.anim-1 { animation-delay: 0.1s; }
+.anim-2 { animation-delay: 0.25s; }
+.anim-3 { animation-delay: 0.4s; }
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(24px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
