@@ -3,15 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hello World</title>
+    <title>Mountain Project Wrapped</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
-    <main>
-        <h1>Hello World</h1>
-        <p>Your site is up and running.</p>
-    </main>
+    <div class="app-container">
+        <!-- Story Progress Bars -->
+        <div class="progress-container" id="progressContainer"></div>
+
+        <!-- Tap Zones -->
+        <div class="nav-zone left" id="navLeft"></div>
+        <div class="nav-zone right" id="navRight"></div>
+
+        <!-- Slides Deck -->
+        <div class="story-deck">
+            
+            <!-- Slide 1: Welcome -->
+            <section class="slide slide-1 active">
+                <p class="subtitle anim-element anim-1">2026 Season</p>
+                <h1 class="title anim-element anim-2">Mountain Project<br>Wrapped</h1>
+                <p class="stat-label anim-element anim-3">Tap right to see how high you climbed this year 🧗</p>
+            </section>
+
+            <!-- Slide 2: Volume & Elevation -->
+            <section class="slide slide-2">
+                <p class="subtitle anim-element anim-1">Vertical Gain</p>
+                <div class="big-stat anim-element anim-2" id="elevationStat">0</div>
+                <p class="stat-label anim-element anim-2">Vertical Feet Climbed</p>
+                <p class="subtitle anim-element anim-3" style="margin-top: 24px;" id="pitchStat">Across 0 Pitches</p>
+            </section>
+
+            <!-- Slide 3: Hardest Sent -->
+            <section class="slide slide-3">
+                <p class="subtitle anim-element anim-1">Peak Performance</p>
+                <h2 class="title anim-element anim-2">Hardest Send</h2>
+                <div class="big-stat anim-element anim-2" id="maxGradeStat">5.12a</div>
+                <p class="stat-label anim-element anim-3" id="maxGradeRoute">"Optimator" • Red Rocks</p>
+            </section>
+
+            <!-- Slide 4: Top Crags -->
+            <section class="slide slide-4">
+                <p class="subtitle anim-element anim-1">Favorite Haunts</p>
+                <h2 class="title anim-element anim-2">Top Crags</h2>
+                <div class="list-container anim-element anim-3" id="cragList"></div>
+            </section>
+
+            <!-- Slide 5: Climbing Persona -->
+            <section class="slide slide-5">
+                <p class="subtitle anim-element anim-1">Your 2026 Identity</p>
+                <h2 class="title anim-element anim-2">You Are A</h2>
+                <div class="persona-badge anim-element anim-3" id="personaBadge">Weekend Warrior</div>
+                <p class="stat-label anim-element anim-3" style="margin-top: 24px;">82% Sport • 18% Trad</p>
+                <button class="restart-btn anim-element anim-3" id="restartBtn">Replay Story 🔄</button>
+            </section>
+
+        </div>
+    </div>
 
     <script src="js/main.js"></script>
 </body>
