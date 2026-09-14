@@ -266,7 +266,7 @@ function processTickList(ticks) {
             ? longestFellHungNote
             : null,
         gumbyMoment: easiestFellHung,
-        notBlogging: longestNonFellHungNote && longestNonFellHungNote.note.length > 100
+        saveForBlog: longestNonFellHungNote && longestNonFellHungNote.note.length > 100
             ? longestNonFellHungNote
             : null,
         seasonYear: currentYear,
@@ -354,13 +354,13 @@ function buildCardsFromStats(stats) {
         });
     }
 
-    if (stats.notBlogging) {
+    if (stats.saveForBlog) {
         cards.push({
-            id: "notBlogging",
+            id: "saveForBlog",
             theme: "bg-sunset",
-            title: "It's not a blogging website",
-            notBlogging: stats.notBlogging,
-            type: "not-blogging"
+            title: "Save it for your blog",
+            saveForBlog: stats.saveForBlog,
+            type: "save-for-blog"
         });
     }
 
@@ -557,12 +557,12 @@ function renderDeck() {
             `;
         }
 
-        if (card.notBlogging) {
+        if (card.saveForBlog) {
             innerHTML += `
                 <div class="angry-card-content anim-element anim-3">
-                    <strong>${card.notBlogging.name}</strong>
-                    <span>${card.notBlogging.grade}</span>
-                    <blockquote>"${card.notBlogging.note}"</blockquote>
+                    <strong>${card.saveForBlog.name}</strong>
+                    <span>${card.saveForBlog.grade}</span>
+                    <blockquote>"${card.saveForBlog.note}"</blockquote>
                 </div>
             `;
         }

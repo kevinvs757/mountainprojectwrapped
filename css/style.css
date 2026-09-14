@@ -238,7 +238,7 @@ body {
 .pause-button {
     position: absolute;
     left: 20px;
-    bottom: 20px;
+    bottom: max(20px, env(safe-area-inset-bottom));
     z-index: 40;
     width: 42px;
     height: 42px;
