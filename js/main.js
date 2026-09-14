@@ -53,7 +53,7 @@ const sampleData = `Date\tRoute\tRating\tNotes\tURL\tPitches\tLocation\tAvg Star
 // --- App State ---
 let cardsData = [];
 let currentSlideIndex = 0;
-const slideDuration = 5000;
+const slideDuration = 7000;
 let progressInterval = null;
 let startTime = 0;
 let progressElapsed = 0;
@@ -69,7 +69,12 @@ const demoBtn = document.getElementById('demoBtn');
 const deckContainer = document.getElementById('storyDeck');
 const progressContainer = document.getElementById('progressContainer');
 const pauseButton = document.getElementById('pauseButton');
+const playbackOverlay = document.getElementById('playbackOverlay');
+const playbackLogo = document.getElementById('playbackLogo');
 const currentYear = new Date().getFullYear();
+let playbackOverlayTimeout = null;
+let playbackOverlayCycle = 0;
+let playbackAnimation = null;
 document.getElementById('seasonLabel').textContent = `${currentYear} Edition`;
 
 // --- Standard CSV Parser ---
@@ -144,6 +149,7 @@ function processTickList(ticks) {
     };
 
     const cragMap = {};
+    const routeMap = {};
     const typeCounts = { Sport: 0, Trad: 0, Boulder: 0 };
     let chodesRidden = 0;
     let jiuJitsuBeltLevel = null;
@@ -179,6 +185,9 @@ function processTickList(ticks) {
         const location = String(tick['Location'] || '');
         const notes = String(tick['Notes'] || '').trim();
         const ratingCode = parseInt(tick['Rating Code'] || 0, 10);
+        if (routeName) {
+            routeMap[routeName] = (routeMap[routeName] || 0) + 1;
+        }
         if (/North Bend & Vicinity/i.test(location)) {
             if (/chode/i.test(routeName)) chodesRidden++;
 
@@ -240,6 +249,12 @@ function processTickList(ticks) {
         .slice(0, 4)
         .map(([name, count]) => ({ name, value: `${count} pitches` }));
 
+    const favoriteRouteEntry = Object.entries(routeMap)
+        .sort((a, b) => b[1] - a[1])[0];
+    const favoriteRoute = favoriteRouteEntry
+        ? { name: favoriteRouteEntry[0], ticks: favoriteRouteEntry[1] }
+        : null;
+
     // Personas
     const totalStyles = typeCounts.Sport + typeCounts.Trad + typeCounts.Boulder || 1;
     const sportPct = Math.round((typeCounts.Sport / totalStyles) * 100);
@@ -259,6 +274,7 @@ function processTickList(ticks) {
             Boulder: maxSends.Boulder.code !== -1 ? maxSends.Boulder : null
         },
         topCrags,
+        favoriteRoute,
         northBender: chodesRidden > 0 && jiuJitsuBeltLevel !== null
             ? { chodesRidden, jiuJitsuBeltLevel }
             : null,
@@ -314,6 +330,17 @@ function buildCardsFromStats(stats) {
             type: "list"
         }
     ];
+
+    if (stats.favoriteRoute) {
+        cards.push({
+            id: "favoriteRoute",
+            theme: "bg-electric",
+            subtitle: "Most Ticked",
+            title: "Favorite Route",
+            favoriteRoute: stats.favoriteRoute,
+            type: "favorite-route"
+        });
+    }
 
     const hardestSends = Object.entries(stats.hardestSends)
         .filter(([, send]) => send)
@@ -557,6 +584,15 @@ function renderDeck() {
             `;
         }
 
+        if (card.favoriteRoute) {
+            innerHTML += `
+                <div class="favorite-route-content anim-element anim-3">
+                    <strong>${card.favoriteRoute.name}</strong>
+                    <span>${card.favoriteRoute.ticks} ticks</span>
+                </div>
+            `;
+        }
+
         if (card.saveForBlog) {
             innerHTML += `
                 <div class="angry-card-content anim-element anim-3">
@@ -580,6 +616,11 @@ function renderDeck() {
 
 function resetToLanding() {
     clearInterval(progressInterval);
+    clearTimeout(playbackOverlayTimeout);
+    playbackOverlayTimeout = null;
+    playbackOverlayCycle++;
+    playbackAnimation?.cancel();
+    playbackOverlay.hidden = true;
     isPaused = false;
     progressElapsed = 0;
     pauseButton.hidden = true;
@@ -653,6 +694,7 @@ function pausePlayback() {
     clearInterval(progressInterval);
     isPaused = true;
     pauseButton.hidden = true;
+    showPlaybackOverlay('pause', true);
 }
 
 function resumePlayback() {
@@ -660,7 +702,37 @@ function resumePlayback() {
 
     isPaused = false;
     pauseButton.hidden = false;
+    showPlaybackOverlay('play', false);
     startProgress();
+}
+
+function showPlaybackOverlay(type, persist) {
+    clearTimeout(playbackOverlayTimeout);
+    playbackOverlayTimeout = null;
+    const overlayCycle = ++playbackOverlayCycle;
+    playbackOverlay.hidden = false;
+    playbackAnimation?.cancel();
+    playbackLogo.getAnimations().forEach(animation => animation.cancel());
+    playbackLogo.className = 'playback-logo';
+    void playbackLogo.offsetWidth;
+    playbackLogo.className = `playback-logo is-${type}`;
+    playbackAnimation = playbackLogo.animate([
+        { opacity: 0, transform: 'scale(0.45)' },
+        { opacity: 0.95, offset: 0.35 },
+        { opacity: 0, transform: 'scale(1.2)' }
+    ], {
+        duration: 1100,
+        easing: 'ease-out',
+        fill: 'both'
+    });
+
+    if (!persist) {
+        playbackOverlayTimeout = setTimeout(() => {
+            if (overlayCycle !== playbackOverlayCycle || isPaused) return;
+            playbackOverlay.hidden = true;
+            playbackOverlayTimeout = null;
+        }, 1200);
+    }
 }
 
 function animateCounter(id, start, end, duration, suffix = '') {
