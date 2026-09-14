@@ -12,7 +12,7 @@
         <!-- Input / Landing Screen -->
         <div class="landing-screen active" id="landingScreen">
             <div class="landing-content">
-                <p class="subtitle">2026 Edition</p>
+                <p class="subtitle" id="seasonLabel">Current Year Edition</p>
                 <h1 class="title">Mountain Project<br>Wrapped</h1>
                 <p class="stat-label" style="margin-bottom: 30px;">See your climbing year in review.</p>
 
@@ -48,6 +48,8 @@
         <!-- Touch / Click Nav Zones -->
         <div class="nav-zone left" id="navLeft"></div>
         <div class="nav-zone right" id="navRight"></div>
+
+        <button class="pause-button" id="pauseButton" type="button" aria-label="Pause slideshow" hidden>||</button>
 
         <!-- Dynamic Deck Container -->
         <div class="story-deck" id="storyDeck"></div>
