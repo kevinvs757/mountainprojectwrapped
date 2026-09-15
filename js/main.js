@@ -148,9 +148,13 @@ function getDeepestCrag(location) {
 }
 
 function isEligibleHardestSend(tick) {
-    const style = String(tick['Style'] || '').trim();
-    const leadStyle = String(tick['Lead Style'] || '').trim();
-    return style !== 'TR' && style !== 'Follow' && leadStyle !== 'Fell/Hung';
+    const styles = String(tick['Style'] || '')
+        .split(',')
+        .map(value => value.trim().toLowerCase())
+        .filter(Boolean);
+    const leadStyle = String(tick['Lead Style'] || '').trim().toLowerCase();
+    return !styles.some(style => style === 'tr' || style === 'follow')
+        && leadStyle !== 'fell/hung';
 }
 
 function getRouteUrl(tick) {
@@ -240,6 +244,7 @@ function processTickList(ticks) {
     let chodesRidden = 0;
     const uniqueChodeRoutes = new Set();
     let jiuJitsuBeltLevel = null;
+    let northBendSends = 0;
     let longestFellHungNote = null;
     let easiestFellHung = null;
     let longestNonFellHungNote = null;
@@ -287,6 +292,8 @@ function processTickList(ticks) {
             routeMap[routeName].ticks++;
         }
         if (/North Bend & Vicinity/i.test(location)) {
+            if (isEligibleHardestSend(tick)) northBendSends++;
+
             if (/chode/i.test(routeName)) {
                 chodesRidden++;
                 uniqueChodeRoutes.add(routeName.toLowerCase());
@@ -369,7 +376,7 @@ function processTickList(ticks) {
         longestRoute,
         shortestRoute,
         northBender: chodesRidden > 0 && jiuJitsuBeltLevel !== null
-            ? { chodesRidden, uniqueChodeRoutes: uniqueChodeRoutes.size, jiuJitsuBeltLevel }
+            ? { northBendSends, chodesRidden, uniqueChodeRoutes: uniqueChodeRoutes.size, jiuJitsuBeltLevel }
             : null,
         angryMuch: longestFellHungNote && longestFellHungNote.note.length > 70
             ? longestFellHungNote
@@ -488,10 +495,11 @@ function buildCardsFromStats(stats) {
             id: "northBender",
             theme: "bg-north-bender",
             subtitle: stats.northBender.uniqueChodeRoutes >= 4
-                ? "You really like chodes, huh?"
+                ? 'You really like north bend and chodes. Do you have any <span class="email-hit-area"><button class="email-link" id="oldRopeEmail" type="button">old ropes</button></span> to part with?'
                 : 'You really like north bend. Do you have any <span class="email-hit-area"><button class="email-link" id="oldRopeEmail" type="button">old ropes</button></span> to part with?',
             title: "Local Crusher",
             bonusStats: [
+                { label: "North Bend Sends", value: stats.northBender.northBendSends },
                 { label: "Chodes Ridden", value: stats.northBender.chodesRidden },
                 { label: "Jiu-Jitsu Belt Level", value: stats.northBender.jiuJitsuBeltLevel }
             ],
