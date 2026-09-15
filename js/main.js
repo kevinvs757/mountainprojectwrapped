@@ -391,7 +391,7 @@ function processTickList(ticks) {
     const favoriteRoute = favoriteRoutes.length === 1 ? favoriteRoutes[0] : null;
     const travelCriteria = [];
     if (travelCountries.size > 2) travelCriteria.push('More than 2 countries');
-    if (travelStates.size > 4) travelCriteria.push('More than 4 states');
+    if (travelStates.size > 5) travelCriteria.push('More than 5 states');
 
     // Personas
     const totalStyles = typeCounts.Sport + typeCounts.Trad + typeCounts.Boulder || 1;
@@ -616,8 +616,7 @@ function extractExportUrl(userInput) {
         const pathParts = url.pathname.split('/').filter(Boolean);
 
         if (pathParts[0] === 'user' && pathParts.length >= 3) {
-            if (pathParts[3] === 'tick-export') return url.href;
-            return `https://www.mountainproject.com/user/${pathParts[1]}/${pathParts[2]}/tick-export`;
+            return `https://www.mountainproject.com/user/${encodeURIComponent(pathParts[1])}/${encodeURIComponent(pathParts[2])}/tick-export`;
         }
     } catch (e) {
         return null;
@@ -636,33 +635,36 @@ async function fetchUserTicks(inputUrl) {
     }
 
     const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
+    const jinaProxyUrl = `https://r.jina.ai/http://${targetUrl.replace(/^https?:\/\//i, '')}`;
 
     fetchUserBtn.textContent = 'Fetching...';
     fetchUserBtn.disabled = true;
 
     try {
-        let response;
+        let csvText;
         let lastError;
-        for (const requestUrl of [targetUrl, proxyUrl]) {
+        for (const requestUrl of [targetUrl, jinaProxyUrl, proxyUrl]) {
             try {
                 const candidate = await fetch(requestUrl);
                 if (candidate.ok) {
-                    response = candidate;
-                    break;
+                    const responseText = (await candidate.text()).replace(/^\uFEFF/, '');
+                    const headerMatch = responseText.match(/(?:^|\r?\n)(Date,Route,)/);
+                    if (headerMatch) {
+                        const headerIndex = headerMatch.index + headerMatch[0].length - headerMatch[1].length;
+                        csvText = responseText.slice(headerIndex).trim();
+                        break;
+                    }
+                    lastError = new Error('The response was not a Mountain Project tick export');
+                } else {
+                    lastError = new Error(`Request failed with status ${candidate.status}`);
                 }
-                lastError = new Error(`Request failed with status ${candidate.status}`);
             } catch (error) {
                 lastError = error;
             }
         }
 
-        if (!response) throw lastError || new Error('Could not fetch the tick export');
-        
-        const csvText = (await response.text()).replace(/^\uFEFF/, '');
-        const firstLine = csvText.split(/\r?\n/, 1)[0] || '';
-        if (!/\bDate\b/.test(firstLine) || !/\bRoute\b/.test(firstLine)) {
-            throw new Error('The export response was not a Mountain Project tick export');
-        }
+        if (!csvText) throw lastError || new Error('Could not fetch the tick export');
+
         const rows = parseCSV(csvText);
         
         if (!rows || rows.length === 0) {
