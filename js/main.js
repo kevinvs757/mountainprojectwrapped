@@ -323,15 +323,16 @@ function processTickList(ticks) {
             routeMap[routeName].ticks++;
         }
         if (/North Bend & Vicinity/i.test(location)) {
-            if (isEligibleHardestSend(tick)) northBendSends++;
+            const isNorthBendSend = isEligibleHardestSend(tick);
+            if (isNorthBendSend) northBendSends++;
 
-            if (/chode/i.test(routeName)) {
+            if (isNorthBendSend && /chode/i.test(routeName)) {
                 chodesRidden++;
                 uniqueChodeRoutes.add(routeName.toLowerCase());
             }
 
             const beltMatch = routeName.match(/Shih Tzu Jiu-Jitsu\s+(\d+)/i);
-            if (beltMatch) {
+            if (isNorthBendSend && beltMatch) {
                 const beltLevel = Number.parseInt(beltMatch[1], 10);
                 jiuJitsuBeltLevel = Math.max(jiuJitsuBeltLevel || 0, beltLevel);
             }
@@ -418,7 +419,7 @@ function processTickList(ticks) {
         travelCriteria,
         longestRoute,
         shortestRoute,
-        northBender: chodesRidden > 0 && jiuJitsuBeltLevel !== null
+        northBender: northBendSends >= 20 || (chodesRidden > 0 && jiuJitsuBeltLevel !== null)
             ? { northBendSends, chodesRidden, uniqueChodeRoutes: uniqueChodeRoutes.size, jiuJitsuBeltLevel }
             : null,
         angryMuch: longestFellHungNote && longestFellHungNote.note.length > 70
@@ -552,6 +553,16 @@ function buildCardsFromStats(stats) {
     }
 
     if (stats.northBender) {
+        const northBendBonusStats = [
+            { label: "North Bend Sends", value: stats.northBender.northBendSends },
+            stats.northBender.chodesRidden > 0
+                ? { label: "Chodes Ridden", value: stats.northBender.chodesRidden }
+                : null,
+            stats.northBender.jiuJitsuBeltLevel !== null
+                ? { label: "Jiu-Jitsu Belt Level", value: stats.northBender.jiuJitsuBeltLevel }
+                : null
+        ].filter(Boolean);
+
         cards.push({
             id: "northBender",
             theme: "bg-north-bender",
@@ -559,11 +570,7 @@ function buildCardsFromStats(stats) {
                 ? 'You really like north bend and chodes. Do you have any <span class="email-hit-area"><button class="email-link" id="oldRopeEmail" type="button">old ropes</button></span> to part with?'
                 : 'You really like north bend. Do you have any <span class="email-hit-area"><button class="email-link" id="oldRopeEmail" type="button">old ropes</button></span> to part with?',
             title: "Local Crusher",
-            bonusStats: [
-                { label: "North Bend Sends", value: stats.northBender.northBendSends },
-                { label: "Chodes Ridden", value: stats.northBender.chodesRidden },
-                { label: "Jiu-Jitsu Belt Level", value: stats.northBender.jiuJitsuBeltLevel }
-            ],
+            bonusStats: northBendBonusStats,
             type: "bonus"
         });
     }
