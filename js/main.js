@@ -262,8 +262,8 @@ function processTickList(ticks) {
 
     let persona = "Weekend Warrior";
     if (sportPct > 60) persona = "Bolt Clipper";
-    else if (tradPct > 40) persona = "Trad Purist";
-    else if (typeCounts.Boulder > typeCounts.Sport) persona = "Pad Stacker";
+    else if (tradPct > 40) persona = "Trad Dad/Mom";
+    else if (typeCounts.Boulder > typeCounts.Sport) persona = "Pebble Wrestler";
 
     return {
         totalElevationFeet,
@@ -335,8 +335,8 @@ function buildCardsFromStats(stats) {
         cards.push({
             id: "favoriteRoute",
             theme: "bg-electric",
-            subtitle: "Most Ticked",
-            title: "Favorite Route",
+            subtitle: "You really like this one I guess",
+            title: "Favorite Climbed Route",
             favoriteRoute: stats.favoriteRoute,
             type: "favorite-route"
         });
@@ -362,6 +362,7 @@ function buildCardsFromStats(stats) {
             id: "gumbyMoment",
             theme: "bg-emerald",
             title: "Humbled by Gravity",
+            subtitle: "Easiest Fall/Hung. Don't beat yourself up.",
             gumbyMoment: stats.gumbyMoment,
             type: "gumby"
         });
@@ -371,7 +372,7 @@ function buildCardsFromStats(stats) {
         cards.push({
             id: "northBender",
             theme: "bg-north-bender",
-            subtitle: "You've been around the block in North Bend!",
+            subtitle: "You crush sport in North Bend!",
             title: "North Bender",
             bonusStats: [
                 { label: "Chodes Ridden", value: stats.northBender.chodesRidden },
@@ -385,6 +386,7 @@ function buildCardsFromStats(stats) {
         cards.push({
             id: "saveForBlog",
             theme: "bg-sunset",
+            subtitle: "the most you espoused on a send",
             title: "Save it for your blog",
             saveForBlog: stats.saveForBlog,
             type: "save-for-blog"
@@ -395,8 +397,8 @@ function buildCardsFromStats(stats) {
         cards.push({
             id: "hardestSends",
             theme: "bg-nebula",
-            subtitle: "Your Hardest Climbs",
-            title: "Biggest Sends",
+            subtitle: "Way to go, kid",
+            title: "Hardest Sends",
             hardestSends,
             type: "hardest"
         });

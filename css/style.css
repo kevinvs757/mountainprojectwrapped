@@ -13,6 +13,7 @@ body {
     justify-content: center;
     align-items: center;
     min-height: 100vh;
+    min-height: 100dvh;
     overflow: hidden;
 }
 
@@ -22,6 +23,7 @@ body {
     width: 100%;
     max-width: 480px;
     height: 100vh;
+    height: 100dvh;
     max-height: 850px;
     background: #000000;
     overflow: hidden;
