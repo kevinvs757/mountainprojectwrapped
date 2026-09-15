@@ -55,10 +55,31 @@
             <span class="playback-logo" id="playbackLogo" aria-hidden="true"></span>
         </div>
 
+        <div class="email-modal" id="emailModal" hidden>
+            <div class="email-dialog" role="dialog" aria-modal="true" aria-labelledby="emailDialogTitle">
+                <button class="email-close" id="emailClose" type="button" aria-label="Close email form">&times;</button>
+                <p class="subtitle">North Bend Correspondence</p>
+                <h2 id="emailDialogTitle">Send Kevin a rope note</h2>
+                <p class="email-dialog-copy">Subject: I have an old rope for you</p>
+                <form id="emailForm">
+                    <label for="emailName">Your name</label>
+                    <input id="emailName" name="from_name" type="text" autocomplete="name" required>
+                    <label for="emailAddress">Your email</label>
+                    <input id="emailAddress" name="reply_to" type="email" autocomplete="email" required>
+                    <label for="emailMessage">Message</label>
+                    <textarea id="emailMessage" name="message" rows="4" required>I have an old rope for you.</textarea>
+                    <input class="email-honeypot" id="emailWebsite" name="website" type="text" tabindex="-1" autocomplete="off" aria-hidden="true">
+                    <p class="email-status" id="emailStatus" role="status"></p>
+                    <button class="action-btn email-submit" id="emailSubmit" type="submit">Send email</button>
+                </form>
+            </div>
+        </div>
+
         <!-- Dynamic Deck Container -->
         <div class="story-deck" id="storyDeck"></div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <script src="js/main.js"></script>
 </body>
 </html>

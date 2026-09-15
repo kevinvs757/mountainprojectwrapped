@@ -71,10 +71,27 @@ const progressContainer = document.getElementById('progressContainer');
 const pauseButton = document.getElementById('pauseButton');
 const playbackOverlay = document.getElementById('playbackOverlay');
 const playbackLogo = document.getElementById('playbackLogo');
+const emailModal = document.getElementById('emailModal');
+const emailForm = document.getElementById('emailForm');
+const emailClose = document.getElementById('emailClose');
+const emailStatus = document.getElementById('emailStatus');
+const emailSubmit = document.getElementById('emailSubmit');
 const currentYear = new Date().getFullYear();
 let playbackOverlayTimeout = null;
 let playbackOverlayCycle = 0;
 let playbackAnimation = null;
+
+const emailConfig = {
+    publicKey: 'YOUR_EMAILJS_PUBLIC_KEY',
+    serviceId: 'YOUR_EMAILJS_SERVICE_ID',
+    templateId: 'YOUR_EMAILJS_TEMPLATE_ID',
+    cooldownMs: 60000
+};
+
+if (window.emailjs && !emailConfig.publicKey.startsWith('YOUR_')) {
+    emailjs.init({ publicKey: emailConfig.publicKey });
+}
+
 document.getElementById('seasonLabel').textContent = `${currentYear} Edition`;
 
 // --- Standard CSV Parser ---
@@ -136,6 +153,73 @@ function isEligibleHardestSend(tick) {
     return style !== 'TR' && style !== 'Follow' && leadStyle !== 'Fell/Hung';
 }
 
+function getRouteUrl(tick) {
+    const routeUrl = String(tick['URL'] || '').trim();
+    return routeUrl.startsWith('http') ? routeUrl : null;
+}
+
+function getRouteDetails(tick, notes = '') {
+    return {
+        name: String(tick['Route'] || '').trim() || 'Unknown Route',
+        grade: tick['Rating'] || 'Unknown',
+        note: notes,
+        url: getRouteUrl(tick),
+        location: tick['Location'] || ''
+    };
+}
+
+function findScenicImage(markdown) {
+    const imageMatches = [...markdown.matchAll(/!\[([^\]]*)\]\((https?:\/\/[^)]+)\)/gi)]
+        .map(match => ({ description: match[1], url: match[2] }))
+        .filter(image => /assets\/photos\/climb\//i.test(image.url));
+    const scenicImage = imageMatches.find(image => /scenic/i.test(image.description));
+    const routeImage = imageMatches.find(image => !/topo/i.test(image.description));
+    return (scenicImage || routeImage || imageMatches[0])?.url || null;
+}
+
+async function fetchScenicImage(route) {
+    if (!route?.url) return null;
+
+    const fetchPage = async url => {
+        const jinaUrl = `https://r.jina.ai/http://${url.replace(/^https?:\/\//i, '')}`;
+        const response = await fetch(jinaUrl);
+        if (!response.ok) return null;
+        return await response.text();
+    };
+
+    try {
+        const routeDocument = await fetchPage(route.url);
+        if (!routeDocument) return null;
+
+        const routeImage = findScenicImage(routeDocument);
+        if (routeImage) return routeImage;
+
+        const parentGroup = routeDocument.match(/\[[^\]]*(?:crag|wall|area|group)[^\]]*\]\((https?:\/\/www\.mountainproject\.com\/area\/[^)]+)\)/i);
+        if (!parentGroup) return null;
+
+        const groupDocument = await fetchPage(parentGroup[1]);
+        return groupDocument ? findScenicImage(groupDocument) : null;
+    } catch (error) {
+        return null;
+    }
+}
+
+async function enrichRouteImages(stats) {
+    const routes = [
+        stats.favoriteRoute,
+        stats.longestRoute,
+        stats.shortestRoute,
+        stats.angryMuch,
+        stats.gumbyMoment,
+        stats.saveForBlog
+    ].filter(route => route?.url);
+    const uniqueRoutes = [...new Map(routes.map(route => [route.url, route])).values()];
+
+    await Promise.all(uniqueRoutes.map(async route => {
+        route.imageUrl = await fetchScenicImage(route);
+    }));
+}
+
 // --- Dynamic Stats Calculator ---
 function processTickList(ticks) {
     let totalElevationFeet = 0;
@@ -154,6 +238,7 @@ function processTickList(ticks) {
     let shortestRoute = null;
     const typeCounts = { Sport: 0, Trad: 0, Boulder: 0 };
     let chodesRidden = 0;
+    const uniqueChodeRoutes = new Set();
     let jiuJitsuBeltLevel = null;
     let longestFellHungNote = null;
     let easiestFellHung = null;
@@ -189,7 +274,7 @@ function processTickList(ticks) {
         const ratingCode = parseInt(tick['Rating Code'] || 0, 10);
         if (Number.isFinite(length) && length > 0) {
             const routeStats = {
-                name: routeName || 'Unknown Route',
+                ...getRouteDetails(tick, notes),
                 feet: length,
                 pitches: Number.isFinite(pitches) && pitches > 0 ? pitches : 1
             };
@@ -198,10 +283,14 @@ function processTickList(ticks) {
             if (!shortestRoute || length < shortestRoute.feet) shortestRoute = routeStats;
         }
         if (routeName) {
-            routeMap[routeName] = (routeMap[routeName] || 0) + 1;
+            if (!routeMap[routeName]) routeMap[routeName] = { ticks: 0, ...getRouteDetails(tick, notes) };
+            routeMap[routeName].ticks++;
         }
         if (/North Bend & Vicinity/i.test(location)) {
-            if (/chode/i.test(routeName)) chodesRidden++;
+            if (/chode/i.test(routeName)) {
+                chodesRidden++;
+                uniqueChodeRoutes.add(routeName.toLowerCase());
+            }
 
             const beltMatch = routeName.match(/Shih Tzu Jiu-Jitsu\s+(\d+)/i);
             if (beltMatch) {
@@ -212,30 +301,20 @@ function processTickList(ticks) {
 
         if (tick['Lead Style'] === 'Fell/Hung'
             && (!longestFellHungNote || notes.length > longestFellHungNote.note.length)) {
-            longestFellHungNote = {
-                name: routeName || 'Unknown Route',
-                grade: tick['Rating'] || 'Unknown',
-                note: notes
-            };
+            longestFellHungNote = getRouteDetails(tick, notes);
         }
 
         if (tick['Lead Style'] === 'Fell/Hung' && Number.isFinite(ratingCode) && ratingCode > 0
             && (!easiestFellHung || ratingCode < easiestFellHung.code)) {
             easiestFellHung = {
+                ...getRouteDetails(tick, notes),
                 code: ratingCode,
-                name: routeName || 'Unknown Route',
-                grade: tick['Rating'] || 'Unknown',
-                note: notes
             };
         }
 
         if (tick['Lead Style'] !== 'Fell/Hung'
             && (!longestNonFellHungNote || notes.length > longestNonFellHungNote.note.length)) {
-            longestNonFellHungNote = {
-                name: routeName || 'Unknown Route',
-                grade: tick['Rating'] || 'Unknown',
-                note: notes
-            };
+            longestNonFellHungNote = getRouteDetails(tick, notes);
         }
 
         // Hardest Send per category using Rating Code
@@ -262,9 +341,9 @@ function processTickList(ticks) {
         .map(([name, count]) => ({ name, value: `${count} pitches` }));
 
     const favoriteRouteEntry = Object.entries(routeMap)
-        .sort((a, b) => b[1] - a[1])[0];
+        .sort((a, b) => b[1].ticks - a[1].ticks)[0];
     const favoriteRoute = favoriteRouteEntry
-        ? { name: favoriteRouteEntry[0], ticks: favoriteRouteEntry[1] }
+        ? { ...favoriteRouteEntry[1], name: favoriteRouteEntry[0] }
         : null;
 
     // Personas
@@ -290,7 +369,7 @@ function processTickList(ticks) {
         longestRoute,
         shortestRoute,
         northBender: chodesRidden > 0 && jiuJitsuBeltLevel !== null
-            ? { chodesRidden, jiuJitsuBeltLevel }
+            ? { chodesRidden, uniqueChodeRoutes: uniqueChodeRoutes.size, jiuJitsuBeltLevel }
             : null,
         angryMuch: longestFellHungNote && longestFellHungNote.note.length > 70
             ? longestFellHungNote
@@ -360,8 +439,8 @@ function buildCardsFromStats(stats) {
         cards.push({
             id: "longestRoute",
             theme: "bg-emerald",
-            subtitle: "Biggest Day Out",
-            title: "Longest Route",
+            subtitle: "Tallest Route Climbed",
+            title: "Most Biggest Climb",
             routeStats: stats.longestRoute,
             type: "route-stats"
         });
@@ -408,8 +487,10 @@ function buildCardsFromStats(stats) {
         cards.push({
             id: "northBender",
             theme: "bg-north-bender",
-            subtitle: "You crush sport in North Bend!",
-            title: "North Bender",
+            subtitle: stats.northBender.uniqueChodeRoutes >= 4
+                ? "You really like chodes, huh?"
+                : 'You really like north bend. Do you have any <button class="email-link" id="oldRopeEmail" type="button">old ropes</button> to part with?',
+            title: "Local Crusher",
             bonusStats: [
                 { label: "Chodes Ridden", value: stats.northBender.chodesRidden },
                 { label: "Jiu-Jitsu Belt Level", value: stats.northBender.jiuJitsuBeltLevel }
@@ -459,6 +540,7 @@ function extractExportUrl(userInput) {
         const pathParts = url.pathname.split('/').filter(Boolean);
 
         if (pathParts[0] === 'user' && pathParts.length >= 3) {
+            if (pathParts[3] === 'tick-export') return url.href;
             return `https://www.mountainproject.com/user/${pathParts[1]}/${pathParts[2]}/tick-export`;
         }
     } catch (e) {
@@ -473,7 +555,7 @@ async function fetchUserTicks(inputUrl) {
     const targetUrl = extractExportUrl(inputUrl);
 
     if (!targetUrl) {
-        alert('Invalid Mountain Project URL.\n\nPlease paste a full link like:\nhttps://www.mountainproject.com/user/200857562/chosslord-supreme');
+        alert('Invalid Mountain Project URL.\n\nPlease paste a full link like:\nhttps://www.mountainproject.com/user/12345789/user-name');
         return;
     }
 
@@ -486,7 +568,11 @@ async function fetchUserTicks(inputUrl) {
         const response = await fetch(proxyUrl);
         if (!response.ok) throw new Error('Network response was not ok');
         
-        const csvText = await response.text();
+        const csvText = (await response.text()).replace(/^\uFEFF/, '');
+        const firstLine = csvText.split(/\r?\n/, 1)[0] || '';
+        if (!/\bDate\b/.test(firstLine) || !/\bRoute\b/.test(firstLine)) {
+            throw new Error('The export response was not a Mountain Project tick export');
+        }
         const rows = parseCSV(csvText);
         
         if (!rows || rows.length === 0) {
@@ -531,11 +617,24 @@ demoBtn.addEventListener('click', () => {
     startWrapped(stats);
 });
 
+function applyRouteImages() {
+    cardsData.forEach((card, index) => {
+        const slide = document.getElementById(`slide-${index}`);
+        const route = card.favoriteRoute || card.routeStats || card.angryMuch
+            || card.gumbyMoment || card.saveForBlog;
+        if (!slide || !route?.imageUrl) return;
+
+        slide.classList.add('route-image-card');
+        slide.style.setProperty('--route-image', `url("${route.imageUrl}")`);
+    });
+}
+
 function startWrapped(stats) {
     cardsData = buildCardsFromStats(stats);
     landingScreen.classList.remove('active');
     pauseButton.hidden = false;
     renderDeck();
+    enrichRouteImages(stats).then(applyRouteImages);
 }
 
 // --- Deck Render & Navigation Engine ---
@@ -550,8 +649,9 @@ function renderDeck() {
         progressContainer.appendChild(bar);
 
         const slideEl = document.createElement('section');
-        slideEl.className = `card-slide ${card.theme} ${i === 0 ? 'active' : ''}`;
+        slideEl.className = `card-slide ${card.theme} ${card.imageUrl ? 'route-image-card' : ''} ${i === 0 ? 'active' : ''}`;
         slideEl.id = `slide-${i}`;
+        if (card.imageUrl) slideEl.style.setProperty('--route-image', `url("${card.imageUrl}")`);
 
         let innerHTML = card.subtitle
             ? `<p class="subtitle anim-element anim-1">${card.subtitle}</p>`
@@ -632,14 +732,11 @@ function renderDeck() {
         }
 
         if (card.routeStats) {
-            const pitchLabel = card.routeStats.pitches === 1
-                ? '1 &quot;pitch&quot;'
-                : `${card.routeStats.pitches} pitches`;
             innerHTML += `
                 <div class="favorite-route-content anim-element anim-3">
                     <strong>${card.routeStats.name}</strong>
-                    <span>${pitchLabel}</span>
-                    <span>${card.routeStats.feet.toLocaleString()} feet</span>
+                    <span id="route-pitches-${i}">0 pitches</span>
+                    <span id="route-feet-${i}">0 feet</span>
                 </div>
             `;
         }
@@ -702,6 +799,10 @@ function goToSlide(index) {
     const card = cardsData[currentSlideIndex];
     if (card && card.type === 'counter' && card.bigStat) {
         animateCounter(`stat-counter-${currentSlideIndex}`, 0, card.bigStat, 1200, card.statSuffix || '');
+    }
+    if (card && card.type === 'route-stats' && card.routeStats) {
+        animateCounter(`route-pitches-${currentSlideIndex}`, 0, card.routeStats.pitches, 900, card.routeStats.pitches === 1 ? ' "pitch"' : ' pitches');
+        animateCounter(`route-feet-${currentSlideIndex}`, 0, card.routeStats.feet, 1100, ' feet');
     }
 
     startProgress();
@@ -799,7 +900,70 @@ function animateCounter(id, start, end, duration, suffix = '') {
     window.requestAnimationFrame(step);
 }
 
+function openEmailModal() {
+    emailModal.hidden = false;
+    emailStatus.textContent = '';
+    emailStatus.className = 'email-status';
+    document.getElementById('emailName').focus();
+}
+
+function closeEmailModal() {
+    emailModal.hidden = true;
+}
+
+function setEmailStatus(message, type = '') {
+    emailStatus.textContent = message;
+    emailStatus.className = `email-status${type ? ` ${type}` : ''}`;
+}
+
+async function sendRopeEmail(event) {
+    event.preventDefault();
+
+    if (document.getElementById('emailWebsite').value) return;
+
+    if (Date.now() - Number(localStorage.getItem('ropeEmailSentAt') || 0) < emailConfig.cooldownMs) {
+        setEmailStatus('Please wait a minute before sending another email.', 'error');
+        return;
+    }
+
+    if (!window.emailjs || emailConfig.publicKey.startsWith('YOUR_')) {
+        setEmailStatus('Email sending is not configured yet. Add the EmailJS IDs in main.js.', 'error');
+        return;
+    }
+
+    emailSubmit.disabled = true;
+    setEmailStatus('Sending...');
+
+    try {
+        await emailjs.send(emailConfig.serviceId, emailConfig.templateId, {
+            to_email: 'kevinvs757@gmail.com',
+            subject: 'I have an old rope for you',
+            from_name: document.getElementById('emailName').value.trim(),
+            reply_to: document.getElementById('emailAddress').value.trim(),
+            message: document.getElementById('emailMessage').value.trim()
+        });
+        localStorage.setItem('ropeEmailSentAt', String(Date.now()));
+        emailForm.reset();
+        setEmailStatus('Sent. Kevin will be in touch.', 'success');
+    } catch (error) {
+        setEmailStatus('Could not send the email. Please try again later.', 'error');
+    } finally {
+        emailSubmit.disabled = false;
+    }
+}
+
 // Navigation Events
+document.addEventListener('click', event => {
+    if (event.target.closest('#oldRopeEmail')) {
+        event.stopPropagation();
+        openEmailModal();
+    }
+});
+emailClose.addEventListener('click', closeEmailModal);
+emailModal.addEventListener('click', event => {
+    if (event.target === emailModal) closeEmailModal();
+});
+emailForm.addEventListener('submit', sendRopeEmail);
 pauseButton.addEventListener('click', (event) => {
     event.stopPropagation();
     pausePlayback();
