@@ -76,7 +76,13 @@ const emailForm = document.getElementById('emailForm');
 const emailClose = document.getElementById('emailClose');
 const emailStatus = document.getElementById('emailStatus');
 const emailSubmit = document.getElementById('emailSubmit');
-const currentYear = new Date().getFullYear();
+function getSeasonYear(date = new Date()) {
+    // January (0) through August (7) calculates using last year's numbers.
+    // September (8) through December (11) calculates using current year's numbers.
+    return date.getMonth() <= 7 ? date.getFullYear() - 1 : date.getFullYear();
+}
+
+const currentSeasonYear = getSeasonYear();
 let playbackOverlayTimeout = null;
 let playbackOverlayCycle = 0;
 let playbackAnimation = null;
@@ -92,35 +98,62 @@ if (window.emailjs && !emailConfig.publicKey.startsWith('YOUR_')) {
     emailjs.init({ publicKey: emailConfig.publicKey });
 }
 
-document.getElementById('seasonLabel').textContent = `${currentYear} Edition`;
+document.getElementById('seasonLabel').textContent = `${currentSeasonYear} Edition`;
 
 // --- Standard CSV Parser ---
 function parseCSV(text) {
-    const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-    if (lines.length < 2) return [];
+    if (!text || !text.trim()) return [];
 
-    const delimiter = lines[0].includes('\t') ? '\t' : ',';
-    const headers = lines[0].split(delimiter).map(h => h.trim().replace(/^"|"$/g, ''));
+    const firstLineEnd = text.indexOf('\n');
+    const firstLine = firstLineEnd === -1 ? text : text.slice(0, firstLineEnd);
+    const delimiter = firstLine.includes('\t') ? '\t' : ',';
+
+    const records = [];
+    let currentRecord = [];
+    let currentField = '';
+    let insideQuote = false;
+
+    for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        const nextChar = text[i + 1];
+
+        if (char === '"') {
+            if (insideQuote && nextChar === '"') {
+                currentField += '"';
+                i++;
+            } else {
+                insideQuote = !insideQuote;
+            }
+        } else if (char === delimiter && !insideQuote) {
+            currentRecord.push(currentField.trim().replace(/^"|"$/g, ''));
+            currentField = '';
+        } else if ((char === '\r' || char === '\n') && !insideQuote) {
+            if (char === '\r' && nextChar === '\n') {
+                i++;
+            }
+            currentRecord.push(currentField.trim().replace(/^"|"$/g, ''));
+            currentField = '';
+            if (currentRecord.some(f => f.length > 0)) {
+                records.push(currentRecord);
+            }
+            currentRecord = [];
+        } else {
+            currentField += char;
+        }
+    }
+
+    currentRecord.push(currentField.trim().replace(/^"|"$/g, ''));
+    if (currentRecord.some(f => f.length > 0)) {
+        records.push(currentRecord);
+    }
+
+    if (records.length < 2) return [];
+
+    const headers = records[0].map(h => h.replace(/^"|"$/g, '').trim());
     const rows = [];
 
-    for (let i = 1; i < lines.length; i++) {
-        let line = lines[i];
-        let values = [];
-        let insideQuote = false;
-        let currentValue = '';
-
-        for (let char of line) {
-            if (char === '"') {
-                insideQuote = !insideQuote;
-            } else if (char === delimiter && !insideQuote) {
-                values.push(currentValue.trim().replace(/^"|"$/g, ''));
-                currentValue = '';
-            } else {
-                currentValue += char;
-            }
-        }
-        values.push(currentValue.trim().replace(/^"|"$/g, ''));
-
+    for (let r = 1; r < records.length; r++) {
+        const values = records[r];
         if (values.length >= headers.length) {
             const row = {};
             headers.forEach((h, idx) => {
@@ -144,7 +177,20 @@ function getDeepestCrag(location) {
         .map(level => level.trim())
         .filter(Boolean);
 
-    return levels[levels.length - 1] || 'Other';
+    if (levels.length === 0) return 'Other';
+    let result = levels[levels.length - 1];
+    if (levels.length >= 2) {
+        const directionalRegex = /\b(north|south|east|west|left|right|upper|lower)\b/i;
+        if (directionalRegex.test(result)) {
+            const parent = levels[levels.length - 2];
+            result = `${parent}, ${result}`;
+        }
+    }
+    return result
+        .replace(/\bNorth\b/gi, 'N')
+        .replace(/\bSouth\b/gi, 'S')
+        .replace(/\bEast\b/gi, 'E.')
+        .replace(/\bWest\b/gi, 'W.');
 }
 
 const usStates = new Set([
@@ -196,6 +242,20 @@ function getRouteDetails(tick, notes = '') {
         url: getRouteUrl(tick),
         location: tick['Location'] || ''
     };
+}
+
+function isNiceValue(val) {
+    if (val === 69 || val === 420 || val === '69' || val === '420') return true;
+    if (typeof val === 'string') {
+        const numMatch = val.match(/\b(69|420)\b/);
+        return Boolean(numMatch);
+    }
+    return false;
+}
+
+function wrapWithNiceSticker(contentHtml, val) {
+    if (!isNiceValue(val)) return contentHtml;
+    return `<span class="nice-sticker-wrapper">${contentHtml}<span class="nice-sticker" aria-hidden="true">nice</span></span>`;
 }
 
 function findScenicImage(markdown) {
@@ -251,7 +311,7 @@ async function enrichRouteImages(stats) {
 }
 
 // --- Dynamic Stats Calculator ---
-function processTickList(ticks) {
+function processTickList(ticks, targetSeasonYear = currentSeasonYear) {
     let totalElevationFeet = 0;
     let totalPitches = 0;
     
@@ -266,7 +326,9 @@ function processTickList(ticks) {
     const routeMap = {};
     let longestRoute = null;
     let shortestRoute = null;
-    const typeCounts = { Sport: 0, Trad: 0, Boulder: 0 };
+    const typeCounts = { Sport: 0, Trad: 0, TopRope: 0, Boulder: 0 };
+    let totalTicks = 0;
+    const climbingDays = new Set();
     let chodesRidden = 0;
     const uniqueChodeRoutes = new Set();
     let jiuJitsuBeltLevel = null;
@@ -278,8 +340,15 @@ function processTickList(ticks) {
     let longestNonFellHungNote = null;
 
     ticks
-        .filter(tick => getTickYear(tick['Date']) === currentYear)
+        .filter(tick => getTickYear(tick['Date']) === targetSeasonYear)
         .forEach(tick => {
+        totalTicks++;
+        const dateText = String(tick['Date'] || '').trim();
+        if (dateText) {
+            const cleanDate = dateText.split('T')[0].split(' ')[0];
+            climbingDays.add(cleanDate);
+        }
+
         // Pitches & Elevation
         const pitches = parseInt(tick['Pitches'] || 1, 10);
         const length = parseInt(tick['Length'] || 0, 10);
@@ -287,10 +356,19 @@ function processTickList(ticks) {
         totalPitches += isNaN(pitches) ? 1 : pitches;
         totalElevationFeet += isNaN(length) ? 0 : length;
 
-        // Categorize Route Type
-        const routeType = tick['Route Type'] || '';
+        // Categorize Route / Ascent Type
+        const styleStr = String(tick['Style'] || '').trim().toLowerCase();
+        const routeType = String(tick['Route Type'] || '').trim();
+        const styles = styleStr.split(',').map(s => s.trim()).filter(Boolean);
+        const isTRStyle = styles.some(s => s === 'tr' || s === 'follow');
+        const isTRRouteType = /^(tr|toprope)$/i.test(routeType);
+        const isTopRope = isTRStyle || isTRRouteType;
+
         let category = null;
-        if (routeType.includes('Sport')) {
+        if (isTopRope) {
+            category = 'TopRope';
+            typeCounts.TopRope++;
+        } else if (routeType.includes('Sport')) {
             category = 'Sport';
             typeCounts.Sport++;
         } else if (routeType.includes('Trad')) {
@@ -357,7 +435,7 @@ function processTickList(ticks) {
         }
 
         // Hardest Send per category using Rating Code
-        if (category && isEligibleHardestSend(tick) && ratingCode > maxSends[category].code) {
+        if (category && maxSends[category] && isEligibleHardestSend(tick) && ratingCode > maxSends[category].code) {
             maxSends[category] = {
                 code: ratingCode,
                 grade: tick['Rating'] || 'Unknown',
@@ -377,7 +455,7 @@ function processTickList(ticks) {
     const topCrags = Object.entries(cragMap)
         .sort((a, b) => b[1] - a[1])
         .slice(0, 5)
-        .map(([name, count]) => ({ name, value: `${count} pitches` }));
+        .map(([name, count]) => ({ name, value: `${count} ${count === 1 ? 'tick' : 'ticks'}` }));
 
     const favoriteRouteEntry = Object.entries(routeMap)
         .sort((a, b) => b[1].ticks - a[1].ticks);
@@ -394,18 +472,33 @@ function processTickList(ticks) {
     if (travelStates.size > 5) travelCriteria.push('More than 5 states');
 
     // Personas
-    const totalStyles = typeCounts.Sport + typeCounts.Trad + typeCounts.Boulder || 1;
+    const totalStyles = typeCounts.Sport + typeCounts.Trad + typeCounts.TopRope + typeCounts.Boulder || 1;
     const sportPct = Math.round((typeCounts.Sport / totalStyles) * 100);
     const tradPct = Math.round((typeCounts.Trad / totalStyles) * 100);
+    const trPct = Math.round((typeCounts.TopRope / totalStyles) * 100);
+    const boulderPct = Math.round((typeCounts.Boulder / totalStyles) * 100);
 
     let persona = "Weekend Warrior";
-    if (sportPct > 60) persona = "Bolt Clipper";
+    if (trPct > 40) persona = "TopRope Tough Guy/Gal";
     else if (tradPct > 40) persona = "Trad Dad/Mom";
-    else if (typeCounts.Boulder > typeCounts.Sport) persona = "Pebble Wrestler";
+    else if (sportPct > 60) persona = "Bolt Clipper";
+    else if (typeCounts.Boulder > typeCounts.Sport && typeCounts.Boulder > typeCounts.Trad && typeCounts.Boulder > typeCounts.TopRope) persona = "Pebble Wrestler";
+
+    const styleParts = [];
+    if (sportPct > 0) styleParts.push(`${sportPct}% Sport`);
+    if (tradPct > 0) styleParts.push(`${tradPct}% Trad`);
+    if (trPct > 0) styleParts.push(`${trPct}% TopRope`);
+    if (boulderPct > 0) styleParts.push(`${boulderPct}% Boulder`);
+
+    const styleRatio = styleParts.length > 0
+        ? styleParts.join(' • ')
+        : `${sportPct}% Sport • ${tradPct}% Trad`;
 
     return {
         totalElevationFeet,
         totalPitches,
+        totalTicks,
+        totalDaysClimbed: climbingDays.size,
         hardestSends: {
             Sport: maxSends.Sport.code !== -1 ? maxSends.Sport : null,
             Trad: maxSends.Trad.code !== -1 ? maxSends.Trad : null,
@@ -429,9 +522,9 @@ function processTickList(ticks) {
         saveForBlog: longestNonFellHungNote && longestNonFellHungNote.note.length > 100
             ? longestNonFellHungNote
             : null,
-        seasonYear: currentYear,
+        seasonYear: targetSeasonYear,
         persona,
-        styleRatio: `${sportPct}% Sport • ${tradPct}% Trad`
+        styleRatio
     };
 }
 
@@ -441,7 +534,7 @@ function buildCardsFromStats(stats) {
         {
             id: "welcome",
             theme: "bg-sunset",
-            subtitle: `${stats.seasonYear || currentYear} Season`,
+            subtitle: `${stats.seasonYear || currentSeasonYear} Season`,
             title: "Mountain Project<br>Wrapped",
             statLabel: "Tap right to see your year in review 🧗",
             type: "intro"
@@ -456,19 +549,46 @@ function buildCardsFromStats(stats) {
             type: "summary"
         },
         {
+            id: "totalClimbs",
+            theme: "bg-nebula",
+            subtitle: "You left the house award",
+            title: "Tick Totals",
+            dualStats: [
+                {
+                    value: stats.totalTicks,
+                    label: stats.totalTicks === 1 ? "Total Tick" : "Total Ticks",
+                    id: "total-ticks"
+                },
+                {
+                    value: stats.totalDaysClimbed,
+                    label: stats.totalDaysClimbed === 1 ? "Climbing Day" : "Climbing Days",
+                    id: "climbing-days"
+                }
+            ],
+            type: "dual-counter"
+        },
+        {
             id: "elevation",
             theme: "bg-emerald",
-            subtitle: "Vertical Gain",
-            bigStat: stats.totalElevationFeet,
-            statSuffix: " ft",
-            statLabel: "Vertical Feet Climbed",
-            secondaryText: `Across ${stats.totalPitches} Pitches`,
-            type: "counter"
+            subtitle: "Whoa",
+            title: "Vertical Gain",
+            dualStats: [
+                {
+                    value: stats.totalElevationFeet,
+                    label: "Vertical Feet",
+                    id: "vertical-feet"
+                },
+                {
+                    value: stats.totalPitches,
+                    label: stats.totalPitches === 1 ? "Total Pitch" : "Total Pitches",
+                    id: "total-pitches"
+                }
+            ],
+            type: "dual-counter"
         },
         {
             id: "topCrags",
             theme: "bg-berry",
-            subtitle: "Favorite Haunts",
             title: "Top Crags",
             list: stats.topCrags,
             type: "list"
@@ -508,8 +628,8 @@ function buildCardsFromStats(stats) {
         cards.push({
             id: "longestRoute",
             theme: "bg-emerald",
-            subtitle: "Tallest Route Climbed",
-            title: "Most Biggest Climb",
+            subtitle: "Most Biggest",
+            title: "Tallest Route Climbed",
             routeStats: stats.longestRoute,
             type: "route-stats"
         });
@@ -534,8 +654,8 @@ function buildCardsFromStats(stats) {
         cards.push({
             id: "angryMuch",
             theme: "bg-berry",
-            subtitle: "Longest Fell/Hung Note",
-            title: "Angry Much?",
+            subtitle: "U mad?",
+            title: "Longest Fell/Hung Note",
             angryMuch: stats.angryMuch,
             type: "angry"
         });
@@ -545,8 +665,8 @@ function buildCardsFromStats(stats) {
         cards.push({
             id: "gumbyMoment",
             theme: "bg-emerald",
-            title: "Humbled by Gravity",
-            subtitle: "Easiest Fall/Hung. Don't beat yourself up.",
+            title: "Easiest Fall/Hang",
+            subtitle: "Humbled by Gravity",
             gumbyMoment: stats.gumbyMoment,
             type: "gumby"
         });
@@ -579,8 +699,8 @@ function buildCardsFromStats(stats) {
         cards.push({
             id: "saveForBlog",
             theme: "bg-sunset",
-            subtitle: "the most you espoused on a send",
-            title: "Save it for your blog",
+            subtitle: "Save it for your blog",
+            title: "The most you espoused on a send",
             saveForBlog: stats.saveForBlog,
             type: "save-for-blog"
         });
@@ -778,6 +898,14 @@ function renderDeck() {
 
         if (card.type === 'counter') {
             innerHTML += `<div class="big-stat anim-element anim-2" id="stat-counter-${i}">0</div>`;
+        } else if (card.type === 'dual-counter' && card.dualStats) {
+            const boxes = card.dualStats.map((stat, idx) => `
+                <div class="stat-box">
+                    <div class="big-stat" id="dual-stat-${i}-${idx}">0</div>
+                    <div class="stat-label">${stat.label}</div>
+                </div>
+            `).join('');
+            innerHTML += `<div class="dual-stats-grid anim-element anim-2">${boxes}</div>`;
         } else if (card.bigStatDisplay) {
             innerHTML += `<div class="big-stat anim-element anim-2">${card.bigStatDisplay}</div>`;
         }
@@ -788,7 +916,7 @@ function renderDeck() {
             const listItems = card.list.map((item, idx) => `
                 <div class="card-list-item">
                     <span>${idx + 1}. ${item.name}</span>
-                    <span>${item.value}</span>
+                    <span>${wrapWithNiceSticker(item.value, item.value)}</span>
                 </div>
             `).join('');
             innerHTML += `<div class="card-list anim-element anim-3">${listItems}</div>`;
@@ -828,7 +956,7 @@ function renderDeck() {
             const bonusItems = card.bonusStats.map(stat => `
                 <div class="hardest-list-item">
                     <span>${stat.label}</span>
-                    <strong>${stat.value}</strong>
+                    <strong>${wrapWithNiceSticker(stat.value, stat.value)}</strong>
                 </div>
             `).join('');
             innerHTML += `<div class="hardest-list bonus-list anim-element anim-3">${bonusItems}</div>`;
@@ -838,8 +966,10 @@ function renderDeck() {
             innerHTML += `
                 <div class="angry-card-content anim-element anim-3">
                     <strong>${card.angryMuch.name}</strong>
-                    <span>${card.angryMuch.grade}</span>
+                    <span class="angry-grade">${card.angryMuch.grade}</span>
+                    <span class="route-crag">${getDeepestCrag(card.angryMuch.location)}</span>
                     <blockquote>"${card.angryMuch.note}"</blockquote>
+                    <span class="intro-label">I'm sure that essay will help you send next time.</span>
                 </div>
             `;
         }
@@ -849,10 +979,11 @@ function renderDeck() {
                 ? `<blockquote>"${card.gumbyMoment.note}"</blockquote>`
                 : '';
             innerHTML += `
-                <div class="gumby-card-content anim-element anim-3">
-                    <span class="gumby-label">You fell on:</span>
+                <div class="angry-card-content anim-element anim-3">
+                    <span class="intro-label">YOU FELL (OR SCREAMED TAKE) ON...</span>
                     <strong>${card.gumbyMoment.name}</strong>
-                    <span class="gumby-grade">${card.gumbyMoment.grade}</span>
+                    <span class="angry-grade">${card.gumbyMoment.grade}</span>
+                    <span class="route-crag">${getDeepestCrag(card.gumbyMoment.location)}</span>
                     ${noteMarkup}
                 </div>
             `;
@@ -862,7 +993,7 @@ function renderDeck() {
             innerHTML += `
                 <div class="favorite-route-content anim-element anim-3">
                     <strong>${card.favoriteRoutes[0].name}</strong>
-                    <span>${card.favoriteRoutes[0].ticks} ticks</span>
+                    <span>${wrapWithNiceSticker(`${card.favoriteRoutes[0].ticks} ticks`, card.favoriteRoutes[0].ticks)}</span>
                 </div>
             `;
         }
@@ -871,7 +1002,7 @@ function renderDeck() {
             const favoriteItems = card.favoriteRoutes.map(route => `
                 <div class="card-list-item">
                     <span>${route.name}</span>
-                    <span>${route.ticks} ticks</span>
+                    <span>${wrapWithNiceSticker(`${route.ticks} ticks`, route.ticks)}</span>
                 </div>
             `).join('');
             innerHTML += `<div class="card-list anim-element anim-3">${favoriteItems}</div>`;
@@ -892,7 +1023,8 @@ function renderDeck() {
             innerHTML += `
                 <div class="angry-card-content anim-element anim-3">
                     <strong>${card.saveForBlog.name}</strong>
-                    <span>${card.saveForBlog.grade}</span>
+                    <span class="angry-grade">${card.saveForBlog.grade}</span>
+                    <span class="route-crag">${getDeepestCrag(card.saveForBlog.location)}</span>
                     <blockquote>"${card.saveForBlog.note}"</blockquote>
                 </div>
             `;
@@ -946,6 +1078,11 @@ function goToSlide(index) {
     const card = cardsData[currentSlideIndex];
     if (card && card.type === 'counter' && card.bigStat) {
         animateCounter(`stat-counter-${currentSlideIndex}`, 0, card.bigStat, 1200, card.statSuffix || '');
+    }
+    if (card && card.type === 'dual-counter' && card.dualStats) {
+        card.dualStats.forEach((stat, idx) => {
+            animateCounter(`dual-stat-${currentSlideIndex}-${idx}`, 0, stat.value, 1200, stat.suffix || '');
+        });
     }
     if (card && card.type === 'route-stats' && card.routeStats) {
         animateCounter(`route-pitches-${currentSlideIndex}`, 0, card.routeStats.pitches, 900, card.routeStats.pitches === 1 ? ' "pitch"' : ' pitches');
@@ -1038,16 +1175,33 @@ function animateCounter(id, start, end, duration, suffix = '') {
     const obj = document.getElementById(id);
     if (!obj) return;
     let startTimestamp = null;
+    const parentContainer = obj.closest('.stat-box') || obj.parentElement;
+    const existingSticker = parentContainer?.querySelector(':scope > .nice-sticker');
+    if (existingSticker) existingSticker.remove();
+
     const step = (timestamp) => {
         if (!startTimestamp) startTimestamp = timestamp;
         const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-        obj.innerHTML = Math.floor(progress * (end - start) + start).toLocaleString() + suffix;
-        if (progress < 1) window.requestAnimationFrame(step);
+        const currentVal = Math.floor(progress * (end - start) + start);
+        obj.innerHTML = currentVal.toLocaleString() + suffix;
+
+        if (progress < 1) {
+            window.requestAnimationFrame(step);
+        } else if (isNiceValue(end)) {
+            if (parentContainer && !parentContainer.querySelector(':scope > .nice-sticker')) {
+                const sticker = document.createElement('span');
+                sticker.className = 'nice-sticker';
+                sticker.setAttribute('aria-hidden', 'true');
+                sticker.textContent = 'nice';
+                parentContainer.appendChild(sticker);
+            }
+        }
     };
     window.requestAnimationFrame(step);
 }
 
 function openEmailModal() {
+    pausePlayback();
     emailModal.hidden = false;
     emailStatus.textContent = '';
     emailStatus.className = 'email-status';
@@ -1056,6 +1210,7 @@ function openEmailModal() {
 
 function closeEmailModal() {
     emailModal.hidden = true;
+    resumePlayback();
 }
 
 function setEmailStatus(message, type = '') {
@@ -1119,6 +1274,14 @@ document.addEventListener('click', event => {
     if (event.target.closest('#oldRopeEmail, .email-hit-area')) {
         event.stopPropagation();
         openEmailModal();
+        return;
+    }
+
+    if (isPaused) {
+        if (event.target === pauseButton || event.target.closest('.email-modal, .email-dialog')) {
+            return;
+        }
+        resumePlayback();
     }
 });
 emailClose.addEventListener('click', closeEmailModal);
@@ -1138,11 +1301,9 @@ document.getElementById('navLeft').addEventListener('click', () => {
     if (isPaused) resumePlayback();
     else prevSlide();
 });
-document.addEventListener('click', (event) => {
-    if (isPaused && event.target !== pauseButton) resumePlayback();
-});
 document.addEventListener('keydown', (e) => {
     if (isPaused) {
+        if (!emailModal.hidden) return;
         resumePlayback();
         return;
     }
