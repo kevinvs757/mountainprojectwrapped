@@ -82,9 +82,9 @@ let playbackOverlayCycle = 0;
 let playbackAnimation = null;
 
 const emailConfig = {
-    publicKey: 'YOUR_EMAILJS_PUBLIC_KEY',
-    serviceId: 'YOUR_EMAILJS_SERVICE_ID',
-    templateId: 'YOUR_EMAILJS_TEMPLATE_ID',
+    publicKey: 'fh_BrxwGuRGArWEvX',
+    serviceId: 'service_mpwrapped',
+    templateId: 'template_qlvi6yc',
     cooldownMs: 60000
 };
 
@@ -953,6 +953,14 @@ async function sendRopeEmail(event) {
 
     if (document.getElementById('emailWebsite').value) return;
 
+    const name = document.getElementById('emailName').value.trim();
+    const address = document.getElementById('emailAddress').value.trim();
+    const message = document.getElementById('emailMessage').value.trim();
+    if (name.length > 100 || address.length > 254 || message.length > 2000) {
+        setEmailStatus('Please shorten your message and try again.', 'error');
+        return;
+    }
+
     if (Date.now() - Number(localStorage.getItem('ropeEmailSentAt') || 0) < emailConfig.cooldownMs) {
         setEmailStatus('Please wait a minute before sending another email.', 'error');
         return;
@@ -970,9 +978,9 @@ async function sendRopeEmail(event) {
         await emailjs.send(emailConfig.serviceId, emailConfig.templateId, {
             to_email: 'kevinvs757@gmail.com',
             subject: 'I have an old rope for you',
-            from_name: document.getElementById('emailName').value.trim(),
-            reply_to: document.getElementById('emailAddress').value.trim(),
-            message: document.getElementById('emailMessage').value.trim()
+            from_name: name,
+            reply_to: address,
+            message
         });
         localStorage.setItem('ropeEmailSentAt', String(Date.now()));
         emailForm.reset();
