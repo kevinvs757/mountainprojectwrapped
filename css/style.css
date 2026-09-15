@@ -265,6 +265,12 @@ body {
     display: none;
 }
 
+@media (max-width: 499px) {
+    .pause-button {
+        position: fixed;
+    }
+}
+
 .playback-overlay {
     position: absolute;
     inset: 0;
