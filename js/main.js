@@ -150,6 +150,8 @@ function processTickList(ticks) {
 
     const cragMap = {};
     const routeMap = {};
+    let longestRoute = null;
+    let shortestRoute = null;
     const typeCounts = { Sport: 0, Trad: 0, Boulder: 0 };
     let chodesRidden = 0;
     let jiuJitsuBeltLevel = null;
@@ -185,6 +187,16 @@ function processTickList(ticks) {
         const location = String(tick['Location'] || '');
         const notes = String(tick['Notes'] || '').trim();
         const ratingCode = parseInt(tick['Rating Code'] || 0, 10);
+        if (Number.isFinite(length) && length > 0) {
+            const routeStats = {
+                name: routeName || 'Unknown Route',
+                feet: length,
+                pitches: Number.isFinite(pitches) && pitches > 0 ? pitches : 1
+            };
+
+            if (!longestRoute || length > longestRoute.feet) longestRoute = routeStats;
+            if (!shortestRoute || length < shortestRoute.feet) shortestRoute = routeStats;
+        }
         if (routeName) {
             routeMap[routeName] = (routeMap[routeName] || 0) + 1;
         }
@@ -275,6 +287,8 @@ function processTickList(ticks) {
         },
         topCrags,
         favoriteRoute,
+        longestRoute,
+        shortestRoute,
         northBender: chodesRidden > 0 && jiuJitsuBeltLevel !== null
             ? { chodesRidden, jiuJitsuBeltLevel }
             : null,
@@ -339,6 +353,28 @@ function buildCardsFromStats(stats) {
             title: "Favorite Climbed Route",
             favoriteRoute: stats.favoriteRoute,
             type: "favorite-route"
+        });
+    }
+
+    if (stats.longestRoute) {
+        cards.push({
+            id: "longestRoute",
+            theme: "bg-emerald",
+            subtitle: "Biggest Day Out",
+            title: "Longest Route",
+            routeStats: stats.longestRoute,
+            type: "route-stats"
+        });
+    }
+
+    if (stats.shortestRoute) {
+        cards.push({
+            id: "shortestRoute",
+            theme: "bg-sunset",
+            subtitle: "A Quick One",
+            title: "Shortest Route",
+            routeStats: stats.shortestRoute,
+            type: "route-stats"
         });
     }
 
@@ -591,6 +627,19 @@ function renderDeck() {
                 <div class="favorite-route-content anim-element anim-3">
                     <strong>${card.favoriteRoute.name}</strong>
                     <span>${card.favoriteRoute.ticks} ticks</span>
+                </div>
+            `;
+        }
+
+        if (card.routeStats) {
+            const pitchLabel = card.routeStats.pitches === 1
+                ? '1 &quot;pitch&quot;'
+                : `${card.routeStats.pitches} pitches`;
+            innerHTML += `
+                <div class="favorite-route-content anim-element anim-3">
+                    <strong>${card.routeStats.name}</strong>
+                    <span>${pitchLabel}</span>
+                    <span>${card.routeStats.feet.toLocaleString()} feet</span>
                 </div>
             `;
         }
