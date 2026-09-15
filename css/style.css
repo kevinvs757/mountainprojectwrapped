@@ -26,8 +26,6 @@ body {
     height: 100dvh;
     max-height: 850px;
     background: #000000;
-    overflow: hidden;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
 }
 
 @media (min-width: 500px) {
@@ -512,13 +510,12 @@ body {
     height: 100%;
     min-height: 100%;
     background:
-        radial-gradient(120% 120% at 18% 12%, rgba(255, 248, 198, 0.86) 0%, rgba(255, 248, 198, 0.2) 18%, transparent 34%),
-        radial-gradient(90% 90% at 82% 26%, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0.08) 20%, transparent 38%),
-        radial-gradient(110% 110% at 52% 82%, rgba(255, 230, 143, 0.8) 0%, rgba(255, 230, 143, 0.12) 18%, transparent 36%),
-        linear-gradient(135deg, #6d3d02 0%, #a76d10 18%, #e4b443 38%, #fef0ad 52%, #d9a335 68%, #7b4305 100%);
-    background-size: 100% 100%, 100% 100%, 100% 100%, 220% 220%;
+        radial-gradient(120% 120% at 18% 12%, rgba(255, 235, 164, 0.72) 0%, rgba(255, 224, 133, 0.16) 18%, transparent 34%),
+        radial-gradient(90% 90% at 82% 26%, rgba(255, 231, 169, 0.5) 0%, rgba(255, 222, 145, 0.06) 18%, transparent 38%),
+        radial-gradient(120% 120% at 58% 76%, rgba(240, 190, 67, 0.72) 0%, rgba(240, 190, 67, 0.1) 20%, transparent 38%),
+        linear-gradient(135deg, #4e2500 0%, #7f4b06 18%, #b97915 38%, #e2b452 52%, #bf8018 68%, #5e3003 100%);
+    background-size: 100% 100%, 100% 100%, 100% 100%, 240% 240%;
     color: #fffdf0;
-    animation: northBendAura 11s ease-in-out infinite alternate;
 }
 
 .bg-north-bender::before,
@@ -532,29 +529,38 @@ body {
 
 .bg-north-bender::before {
     background:
-        radial-gradient(circle at 12% 16%, rgba(255, 247, 198, 0.82) 0 2.2%, transparent 3.2%),
-        radial-gradient(circle at 28% 75%, rgba(255, 255, 255, 0.7) 0 1.8%, transparent 2.9%),
-        radial-gradient(circle at 64% 22%, rgba(255, 248, 200, 0.78) 0 2.1%, transparent 3.1%),
-        radial-gradient(circle at 78% 68%, rgba(255, 238, 159, 0.75) 0 2%, transparent 3%),
-        radial-gradient(circle at 58% 86%, rgba(255, 255, 255, 0.7) 0 1.8%, transparent 2.9%),
-        linear-gradient(180deg, rgba(255, 251, 221, 0.12), rgba(54, 27, 0, 0.12));
-    opacity: 0.95;
-    animation: northBendSparkle 5.5s ease-in-out infinite alternate;
+        radial-gradient(circle at 12% 16%, rgba(255, 249, 202, 0.82) 0 2.4%, transparent 3.4%),
+        radial-gradient(circle at 26% 76%, rgba(255, 255, 255, 0.72) 0 1.8%, transparent 3%),
+        radial-gradient(circle at 68% 22%, rgba(255, 249, 202, 0.8) 0 2.2%, transparent 3.2%),
+        radial-gradient(circle at 80% 66%, rgba(255, 236, 163, 0.76) 0 2%, transparent 3.1%),
+        radial-gradient(circle at 58% 86%, rgba(255, 255, 255, 0.68) 0 1.8%, transparent 3%),
+        linear-gradient(180deg, rgba(255, 251, 221, 0.12), rgba(68, 36, 0, 0.08));
+    opacity: 0;
+    animation: none;
 }
 
 .bg-north-bender::after {
     background:
-        linear-gradient(120deg, transparent 20%, rgba(255, 255, 255, 0.22) 50%, transparent 80%);
-    transform: translateX(-35%) skewX(-18deg);
-    opacity: 0.55;
-    animation: northBendScan 6s ease-in-out infinite;
+        linear-gradient(120deg, transparent 0%, rgba(255, 255, 255, 0.32) 48%, transparent 100%);
+    transform: translateX(-30%) skewX(-20deg);
+    opacity: 0;
+    animation: none;
 }
 
 .bg-north-bender.active::before {
     background:
-        radial-gradient(ellipse at center, rgba(255, 255, 237, 0.98) 0 12%, rgba(255, 232, 133, 0.6) 20%, rgba(255, 200, 66, 0.2) 38%, transparent 64%),
-        linear-gradient(180deg, rgba(255, 248, 199, 0.12), rgba(0, 0, 0, 0.04));
-    animation: northBendBloom 1.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+        radial-gradient(ellipse at center, rgba(255, 213, 91, 0.78) 0 12%, rgba(244, 193, 65, 0.54) 20%, rgba(210, 143, 24, 0.18) 38%, transparent 62%),
+        linear-gradient(180deg, rgba(255, 249, 210, 0.12), rgba(0, 0, 0, 0.04));
+    animation: northBendBloom 1.15s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.bg-north-bender.active::after {
+    background:
+        radial-gradient(ellipse at center, rgba(255, 255, 248, 0.88) 0 8%, rgba(255, 244, 194, 0.6) 18%, rgba(255, 214, 96, 0.22) 38%, transparent 66%),
+        radial-gradient(ellipse at center, transparent 0 48%, rgba(255, 255, 255, 0.36) 49%, transparent 52%);
+    transform: scale(0.5);
+    opacity: 0;
+    animation: northBendBurst 1.25s 0.08s cubic-bezier(0.16, 0.8, 0.24, 1) both;
 }
 
 .bg-north-bender > * {
@@ -564,8 +570,8 @@ body {
 }
 
 .bg-north-bender .title {
-    color: #fffbe1;
-    text-shadow: 0 3px 18px rgba(79, 43, 0, 0.6), 0 0 20px rgba(255, 235, 156, 0.55);
+    color: #fff0bd;
+    text-shadow: 0 3px 18px rgba(67, 33, 0, 0.72), 0 0 20px rgba(255, 216, 111, 0.4);
     transform-origin: center bottom;
 }
 
@@ -587,7 +593,10 @@ body {
     background: linear-gradient(135deg, rgba(255, 247, 204, 0.28), rgba(255, 214, 102, 0.15));
     color: #fffef4;
     cursor: pointer;
-    font: inherit;
+    appearance: none;
+    -webkit-appearance: none;
+    font-family: inherit;
+    font-size: 0.88rem;
     font-weight: 800;
     letter-spacing: 0.04em;
     line-height: 1.1;
@@ -602,7 +611,7 @@ body {
     position: absolute;
     inset: -35% -10%;
     content: "";
-    background: linear-gradient(120deg, transparent 35%, rgba(255, 255, 255, 0.45) 50%, transparent 65%);
+    background: linear-gradient(120deg, transparent 35%, rgba(255, 225, 137, 0.3) 50%, transparent 65%);
     transform: translateX(-130%) skewX(-18deg);
     animation: northBendButtonShimmer 3s ease-in-out infinite;
 }
@@ -630,7 +639,7 @@ body {
 }
 
 .bg-north-bender .anim-element {
-    animation: northBendReveal 0.74s cubic-bezier(0.18, 0.9, 0.25, 1) both;
+    animation: northBendReveal 0.76s cubic-bezier(0.18, 0.9, 0.25, 1) both;
 }
 
 .card-slide.bg-north-bender.active .title {
@@ -948,12 +957,10 @@ body {
 @keyframes northBendButtonPulse {
     0% {
         box-shadow: 0 0 0 1px rgba(255, 241, 150, 0.14), 0 0 10px rgba(255, 214, 102, 0.26), 0 0 20px rgba(255, 255, 255, 0.06);
-        transform: translateY(0) scale(1);
         filter: brightness(0.96);
     }
     100% {
         box-shadow: 0 0 0 1px rgba(255, 241, 150, 0.34), 0 0 18px rgba(255, 214, 102, 0.38), 0 0 28px rgba(255, 255, 255, 0.18);
-        transform: translateY(-1px) scale(1.015);
         filter: brightness(1.1);
     }
 }
@@ -976,24 +983,25 @@ body {
 
 @keyframes northBendBloom {
     0% { opacity: 0; transform: scale(0.78); }
-    45% { opacity: 1; transform: scale(1.04); }
-    100% { opacity: 1; transform: scale(1); }
+    28% { opacity: 1; transform: scale(1.04); }
+    100% { opacity: 0; transform: scale(1.18); }
 }
 
 @keyframes northBendScan {
     0% { transform: translateX(-115%) skewX(-18deg); opacity: 0; }
-    18% { opacity: 0.35; }
-    50% { opacity: 0.58; }
+    18% { opacity: 0.28; }
+    48% { opacity: 0.5; }
     100% { transform: translateX(115%) skewX(-18deg); opacity: 0; }
 }
 
 @media (max-width: 499px) {
     .bg-north-bender {
         background:
-            radial-gradient(circle at 18% 18%, rgba(255, 249, 196, 0.85) 0 1px, transparent 2px),
-            radial-gradient(circle at 77% 28%, rgba(255, 255, 255, 0.7) 0 1px, transparent 2px),
-            radial-gradient(circle at 60% 76%, rgba(255, 239, 154, 0.7) 0 1px, transparent 2px),
-            linear-gradient(135deg, #7c4d03 0%, #d7a63a 34%, #ffe9a2 52%, #bc860d 72%, #5b3503 100%);
+            radial-gradient(120% 120% at 18% 12%, rgba(255, 235, 164, 0.66) 0%, rgba(255, 224, 133, 0.12) 18%, transparent 34%),
+            radial-gradient(90% 90% at 82% 26%, rgba(255, 231, 169, 0.42) 0%, rgba(255, 222, 145, 0.05) 18%, transparent 38%),
+            radial-gradient(120% 120% at 58% 76%, rgba(240, 190, 67, 0.64) 0%, rgba(240, 190, 67, 0.08) 20%, transparent 38%),
+            linear-gradient(135deg, #4e2500 0%, #7f4b06 18%, #b97915 38%, #e2b452 52%, #bf8018 68%, #5e3003 100%);
+        background-size: 100% 100%, 100% 100%, 100% 100%, 240% 240%;
     }
 
     .bg-north-bender .title {
@@ -1010,12 +1018,67 @@ body {
     }
 
     .bg-north-bender .email-link {
-        padding: 0.26em 0.7em 0.32em;
-        font-size: 0.95em;
+        position: relative;
+        z-index: 2;
+        min-height: 32px;
+        padding: 0.35rem 0.75rem 0.4rem;
+        font-size: 0.84rem;
+        line-height: 1;
+        vertical-align: middle;
+    }
+
+    .email-modal {
+        position: fixed;
+        padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
     }
 
     .email-dialog {
-        width: min(100%, 340px);
-        padding: 24px 18px 18px;
+        width: min(100%, 360px);
+        max-height: calc(100dvh - 32px);
+        padding: 28px 18px 18px;
+        border-color: rgba(255, 225, 126, 0.5);
+        border-radius: 16px;
+        background:
+            radial-gradient(circle at top, rgba(255, 221, 112, 0.24), transparent 42%),
+            linear-gradient(145deg, rgba(77, 43, 5, 0.98), rgba(30, 20, 5, 0.98));
+        box-shadow: 0 18px 50px rgba(2, 6, 23, 0.72), 0 0 0 1px rgba(255, 226, 128, 0.16), 0 0 28px rgba(255, 196, 55, 0.2);
     }
+
+    .email-dialog .subtitle {
+        color: #ffe58b;
+    }
+
+    .email-dialog-copy {
+        color: rgba(255, 243, 190, 0.72);
+    }
+
+    .email-dialog label {
+        color: #ffefb0;
+    }
+
+    .email-dialog input:not(.email-honeypot),
+    .email-dialog textarea {
+        border-color: rgba(255, 232, 153, 0.28);
+        background: rgba(32, 19, 2, 0.72);
+    }
+
+    .email-dialog input:focus,
+    .email-dialog textarea:focus {
+        border-color: #ffe58b;
+        box-shadow: 0 0 0 3px rgba(255, 217, 94, 0.14);
+    }
+
+    .email-submit {
+        border: 1px solid rgba(255, 238, 169, 0.5);
+        background: linear-gradient(135deg, #ffe58b, #d49a24);
+        color: #3d2300;
+        box-shadow: 0 8px 22px rgba(255, 190, 53, 0.24);
+    }
+}
+
+@keyframes northBendBurst {
+    0% { transform: scale(0.5); opacity: 0; }
+    18% { transform: scale(0.82); opacity: 0.95; }
+    42% { transform: scale(1.04); opacity: 0.72; }
+    100% { transform: scale(1.42); opacity: 0; }
 }
