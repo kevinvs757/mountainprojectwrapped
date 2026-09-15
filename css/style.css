@@ -327,10 +327,15 @@ body {
     max-height: 100%;
     overflow-y: auto;
     padding: 28px 24px 24px;
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    border-radius: 16px;
-    background: #0f172a;
-    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 18px;
+    background:
+        radial-gradient(circle at top, rgba(103, 232, 249, 0.18), transparent 38%),
+        linear-gradient(135deg, rgba(15, 23, 42, 0.96), rgba(30, 41, 59, 0.96));
+    box-shadow:
+        0 22px 60px rgba(2, 6, 23, 0.65),
+        inset 0 1px 0 rgba(255, 255, 255, 0.18),
+        0 0 0 1px rgba(125, 211, 252, 0.12);
     color: #f8fafc;
 }
 
@@ -440,19 +445,24 @@ body {
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    width: 100%;
+    height: 100%;
+    min-height: 100%;
     padding: 40px 24px;
     text-align: center;
     opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.28s ease-out, transform 0.28s ease-out;
-    transform: scale(0.95);
+    pointer-events: none;
+    transition: opacity 0.52s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.52s cubic-bezier(0.16, 1, 0.3, 1);
+    transform: translateY(18px) scale(0.985);
     box-sizing: border-box;
+    will-change: opacity, transform;
 }
 
 .card-slide.active {
     opacity: 1;
-    visibility: visible;
-    transform: scale(1);
+    pointer-events: auto;
+    transform: translateY(0) scale(1);
     z-index: 10;
 }
 
@@ -491,91 +501,127 @@ body {
 .bg-berry { background: linear-gradient(135deg, #831843 0%, #db2777 50%, #f472b6 100%); color: #fff; }
 .bg-electric { background: linear-gradient(135deg, #0284c7 0%, #2563eb 50%, #4f46e5 100%); color: #fff; }
 .bg-north-bender {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
     isolation: isolate;
     overflow: hidden;
+    width: 100%;
+    height: 100%;
+    min-height: 100%;
     background:
-        radial-gradient(circle at 18% 20%, rgba(255, 249, 196, 0.9) 0 1px, transparent 2px),
-        radial-gradient(circle at 78% 30%, rgba(255, 255, 255, 0.8) 0 1px, transparent 2px),
-        radial-gradient(circle at 65% 78%, rgba(255, 239, 154, 0.8) 0 1px, transparent 2px),
-        linear-gradient(135deg, #8a5a08 0%, #d6a62a 38%, #fff0a1 52%, #b77b0d 76%, #704307 100%);
-    background-size: auto, auto, auto, 220% 220%;
+        radial-gradient(120% 120% at 18% 12%, rgba(255, 248, 198, 0.86) 0%, rgba(255, 248, 198, 0.2) 18%, transparent 34%),
+        radial-gradient(90% 90% at 82% 26%, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0.08) 20%, transparent 38%),
+        radial-gradient(110% 110% at 52% 82%, rgba(255, 230, 143, 0.8) 0%, rgba(255, 230, 143, 0.12) 18%, transparent 36%),
+        linear-gradient(135deg, #6d3d02 0%, #a76d10 18%, #e4b443 38%, #fef0ad 52%, #d9a335 68%, #7b4305 100%);
+    background-size: 100% 100%, 100% 100%, 100% 100%, 220% 220%;
     color: #fffdf0;
-    animation: goldShift 8s ease-in-out infinite alternate;
+    animation: northBendAura 11s ease-in-out infinite alternate;
 }
 
 .bg-north-bender::before,
 .bg-north-bender::after {
     position: absolute;
-    z-index: -1;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: #fff8c7;
-    box-shadow: 0 0 8px 3px rgba(255, 248, 199, 0.8), 0 0 22px 5px rgba(255, 215, 64, 0.45);
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
     content: "";
-    opacity: 0;
+}
+
+.bg-north-bender::before {
+    background:
+        radial-gradient(circle at 12% 16%, rgba(255, 247, 198, 0.82) 0 2.2%, transparent 3.2%),
+        radial-gradient(circle at 28% 75%, rgba(255, 255, 255, 0.7) 0 1.8%, transparent 2.9%),
+        radial-gradient(circle at 64% 22%, rgba(255, 248, 200, 0.78) 0 2.1%, transparent 3.1%),
+        radial-gradient(circle at 78% 68%, rgba(255, 238, 159, 0.75) 0 2%, transparent 3%),
+        radial-gradient(circle at 58% 86%, rgba(255, 255, 255, 0.7) 0 1.8%, transparent 2.9%),
+        linear-gradient(180deg, rgba(255, 251, 221, 0.12), rgba(54, 27, 0, 0.12));
+    opacity: 0.95;
+    animation: northBendSparkle 5.5s ease-in-out infinite alternate;
 }
 
 .bg-north-bender::after {
-    inset: 0;
-    z-index: -1;
-    width: auto;
-    height: auto;
-    border-radius: 0;
     background:
-        radial-gradient(circle at 16% 28%, #fff8c7 0 2px, transparent 3px),
-        radial-gradient(circle at 81% 25%, #fff8c7 0 2px, transparent 3px),
-        radial-gradient(circle at 72% 73%, #fff8c7 0 1px, transparent 3px),
-        radial-gradient(circle at 24% 78%, #fff8c7 0 1px, transparent 3px),
-        radial-gradient(circle at 50% 17%, #ffffff 0 2px, transparent 3px),
-        radial-gradient(circle at 52% 84%, #ffe98a 0 2px, transparent 3px);
-    box-shadow: none;
-    animation: chestParticles 1.8s 0.08s ease-out both, sparkleField 3.8s 1.8s ease-in-out infinite;
+        linear-gradient(120deg, transparent 20%, rgba(255, 255, 255, 0.22) 50%, transparent 80%);
+    transform: translateX(-35%) skewX(-18deg);
+    opacity: 0.55;
+    animation: northBendScan 6s ease-in-out infinite;
 }
 
 .bg-north-bender.active::before {
-    position: absolute;
-    inset: -35%;
-    z-index: -1;
-    width: auto;
-    height: auto;
-    border-radius: 0;
     background:
-        radial-gradient(ellipse at center, rgba(255, 255, 237, 1) 0 3%, rgba(255, 239, 139, 0.95) 9%, rgba(255, 202, 39, 0.35) 26%, transparent 58%),
-        conic-gradient(from 0deg at center, transparent 0 7%, rgba(255, 246, 177, 0.55) 9%, transparent 12% 22%, rgba(255, 246, 177, 0.45) 24%, transparent 27% 41%, rgba(255, 246, 177, 0.5) 43%, transparent 46% 63%, rgba(255, 246, 177, 0.5) 65%, transparent 68% 84%, rgba(255, 246, 177, 0.45) 86%, transparent 89%);
-    content: "";
-    opacity: 0;
-    transform: scale(0.2) rotate(-12deg);
-    animation: chestBurst 1.25s cubic-bezier(0.16, 1, 0.3, 1) both;
+        radial-gradient(ellipse at center, rgba(255, 255, 237, 0.98) 0 12%, rgba(255, 232, 133, 0.6) 20%, rgba(255, 200, 66, 0.2) 38%, transparent 64%),
+        linear-gradient(180deg, rgba(255, 248, 199, 0.12), rgba(0, 0, 0, 0.04));
+    animation: northBendBloom 1.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.bg-north-bender > * {
+    position: relative;
+    z-index: 1;
+    width: min(100%, 360px);
 }
 
 .bg-north-bender .title {
     color: #fffbe1;
-    text-shadow: 0 3px 16px rgba(81, 46, 0, 0.55), 0 0 18px rgba(255, 239, 154, 0.45);
+    text-shadow: 0 3px 18px rgba(79, 43, 0, 0.6), 0 0 20px rgba(255, 235, 156, 0.55);
+    transform-origin: center bottom;
+}
+
+.bg-north-bender .subtitle {
+    position: relative;
+    text-shadow: 0 0 18px rgba(255, 243, 166, 0.32);
+    opacity: 0.96;
 }
 
 .bg-north-bender .email-link {
-    border: 0;
-    padding: 0;
-    background: transparent;
-    color: #fffbe1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    padding: 0.2em 0.62em 0.28em;
+    margin: 0 0.06em;
+    border: 1px solid rgba(255, 246, 188, 0.72);
+    border-radius: 999px;
+    background: linear-gradient(135deg, rgba(255, 247, 204, 0.28), rgba(255, 214, 102, 0.15));
+    color: #fffef4;
     cursor: pointer;
     font: inherit;
-    text-decoration: underline;
-    text-decoration-color: rgba(255, 251, 225, 0.7);
-    text-underline-offset: 3px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    line-height: 1.1;
+    text-decoration: none;
+    box-shadow: 0 0 0 1px rgba(255, 241, 150, 0.16), 0 0 18px rgba(255, 214, 102, 0.28);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    animation: northBendButtonPulse 2.6s ease-in-out infinite alternate;
+    overflow: hidden;
+}
+
+.bg-north-bender .email-link::before {
+    position: absolute;
+    inset: -35% -10%;
+    content: "";
+    background: linear-gradient(120deg, transparent 35%, rgba(255, 255, 255, 0.45) 50%, transparent 65%);
+    transform: translateX(-130%) skewX(-18deg);
+    animation: northBendButtonShimmer 3s ease-in-out infinite;
 }
 
 .bg-north-bender .email-link:hover,
 .bg-north-bender .email-link:focus-visible {
-    color: #ffffff;
-    text-decoration-color: #ffffff;
+    color: #fffdf4;
+    background: linear-gradient(135deg, rgba(255, 247, 204, 0.42), rgba(255, 214, 102, 0.24));
+    box-shadow: 0 0 0 1px rgba(255, 241, 150, 0.28), 0 0 24px rgba(255, 214, 102, 0.44), 0 0 12px rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px) scale(1.02);
+    text-decoration: none;
+    outline: none;
 }
 
 .bg-north-bender .bonus-list {
     border: 1px solid rgba(255, 248, 199, 0.38);
     background: rgba(76, 43, 0, 0.28);
     box-shadow: 0 0 24px rgba(255, 219, 92, 0.22);
+    backdrop-filter: blur(10px);
 }
 
 .bg-north-bender .hardest-list-item strong {
@@ -584,11 +630,11 @@ body {
 }
 
 .bg-north-bender .anim-element {
-    animation-name: goldReveal;
+    animation: northBendReveal 0.74s cubic-bezier(0.18, 0.9, 0.25, 1) both;
 }
 
 .card-slide.bg-north-bender.active .title {
-    animation: chestTitle 1.1s 0.12s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation: northBendTitle 0.9s 0.08s cubic-bezier(0.18, 0.9, 0.25, 1) both;
 }
 
 /* --- Typography & Elements --- */
@@ -836,21 +882,22 @@ body {
 
 /* --- Slide Animations --- */
 .card-slide.active .anim-element {
-    animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation: fadeInUp 0.62s cubic-bezier(0.16, 1, 0.3, 1) both;
+    will-change: opacity, transform;
 }
 
-.anim-1 { animation-delay: 0.1s; }
-.anim-2 { animation-delay: 0.25s; }
-.anim-3 { animation-delay: 0.4s; }
+.anim-1 { animation-delay: 0.08s; }
+.anim-2 { animation-delay: 0.18s; }
+.anim-3 { animation-delay: 0.28s; }
 
 @keyframes fadeInUp {
-    from {
+    0% {
         opacity: 0;
-        transform: translateY(24px);
+        transform: translateY(22px) scale(0.985);
     }
-    to {
+    100% {
         opacity: 1;
-        transform: translateY(0);
+        transform: translateY(0) scale(1);
     }
 }
 
@@ -864,9 +911,9 @@ body {
     35%, 65% { opacity: 1; transform: scale(1.3) translateY(-8px); }
 }
 
-@keyframes goldReveal {
-    from { opacity: 0; transform: translateY(24px) scale(0.96); filter: brightness(1.25); }
-    to { opacity: 1; transform: translateY(0) scale(1); filter: brightness(1); }
+@keyframes northBendReveal {
+    0% { opacity: 0; transform: translateY(18px) scale(0.97); filter: brightness(1.2) blur(1px); }
+    100% { opacity: 1; transform: translateY(0) scale(1); filter: brightness(1) blur(0); }
 }
 
 @keyframes playbackLogoPulse {
@@ -893,8 +940,82 @@ body {
     50% { opacity: 0.8; }
 }
 
-@keyframes chestTitle {
-    0% { opacity: 0; transform: translateY(32px) scale(0.65); filter: brightness(3) blur(4px); }
-    45% { opacity: 1; filter: brightness(2.2) blur(0); }
+@keyframes northBendTitle {
+    0% { opacity: 0; transform: translateY(18px) scale(0.88); filter: brightness(1.9) blur(2px); }
     100% { opacity: 1; transform: translateY(0) scale(1); filter: brightness(1) blur(0); }
+}
+
+@keyframes northBendButtonPulse {
+    0% {
+        box-shadow: 0 0 0 1px rgba(255, 241, 150, 0.14), 0 0 10px rgba(255, 214, 102, 0.26), 0 0 20px rgba(255, 255, 255, 0.06);
+        transform: translateY(0) scale(1);
+        filter: brightness(0.96);
+    }
+    100% {
+        box-shadow: 0 0 0 1px rgba(255, 241, 150, 0.34), 0 0 18px rgba(255, 214, 102, 0.38), 0 0 28px rgba(255, 255, 255, 0.18);
+        transform: translateY(-1px) scale(1.015);
+        filter: brightness(1.1);
+    }
+}
+
+@keyframes northBendButtonShimmer {
+    0% { transform: translateX(-150%) skewX(-18deg); opacity: 0; }
+    22% { opacity: 1; }
+    100% { transform: translateX(150%) skewX(-18deg); opacity: 0; }
+}
+
+@keyframes northBendAura {
+    0% { background-position: 0% 50%, 0% 0%, 0% 0%, 50% 50%; }
+    100% { background-position: 100% 50%, 0% 0%, 0% 0%, 150% 50%; }
+}
+
+@keyframes northBendSparkle {
+    0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.8; }
+    50% { transform: scale(1.04) rotate(2deg); opacity: 1; }
+}
+
+@keyframes northBendBloom {
+    0% { opacity: 0; transform: scale(0.78); }
+    45% { opacity: 1; transform: scale(1.04); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes northBendScan {
+    0% { transform: translateX(-115%) skewX(-18deg); opacity: 0; }
+    18% { opacity: 0.35; }
+    50% { opacity: 0.58; }
+    100% { transform: translateX(115%) skewX(-18deg); opacity: 0; }
+}
+
+@media (max-width: 499px) {
+    .bg-north-bender {
+        background:
+            radial-gradient(circle at 18% 18%, rgba(255, 249, 196, 0.85) 0 1px, transparent 2px),
+            radial-gradient(circle at 77% 28%, rgba(255, 255, 255, 0.7) 0 1px, transparent 2px),
+            radial-gradient(circle at 60% 76%, rgba(255, 239, 154, 0.7) 0 1px, transparent 2px),
+            linear-gradient(135deg, #7c4d03 0%, #d7a63a 34%, #ffe9a2 52%, #bc860d 72%, #5b3503 100%);
+    }
+
+    .bg-north-bender .title {
+        font-size: 2.1rem;
+    }
+
+    .card-slide {
+        padding: 56px 18px 32px;
+    }
+
+    .card-slide .subtitle {
+        font-size: 0.72rem;
+        letter-spacing: 1.2px;
+    }
+
+    .bg-north-bender .email-link {
+        padding: 0.26em 0.7em 0.32em;
+        font-size: 0.95em;
+    }
+
+    .email-dialog {
+        width: min(100%, 340px);
+        padding: 24px 18px 18px;
+    }
 }
