@@ -631,6 +631,18 @@ function applyRouteImages() {
         image.className = 'route-image-layer';
         image.alt = '';
         image.setAttribute('aria-hidden', 'true');
+        Object.assign(image.style, {
+            position: 'absolute',
+            inset: '0',
+            zIndex: '0',
+            display: 'block',
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            opacity: '0.34',
+            filter: 'saturate(0.7) contrast(0.9)',
+            pointerEvents: 'none'
+        });
         image.src = route.imageUrl;
         image.addEventListener('error', () => {
             slide.classList.remove('route-image-card');
