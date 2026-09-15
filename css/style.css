@@ -182,18 +182,20 @@ body {
 }
 
 .demo-btn {
+    position: absolute;
+    right: 14px;
+    bottom: max(12px, env(safe-area-inset-bottom));
     background: transparent;
     border: none;
-    color: #64748b;
-    font-size: 0.82rem;
-    text-decoration: underline;
-    margin-top: 12px;
+    color: rgba(15, 23, 42, 0.16);
+    font-size: 0.68rem;
+    text-decoration: none;
     cursor: pointer;
     transition: color 0.2s ease;
 }
 
 .demo-btn:hover {
-    color: #94a3b8;
+    color: rgba(148, 163, 184, 0.42);
 }
 
 /* --- Progress Bar Indicators --- */
@@ -413,6 +415,50 @@ body {
     line-height: 1.35;
 }
 
+.traveller-content {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    width: 100%;
+    max-width: 340px;
+    margin: 16px 0 20px;
+    padding: 20px;
+    border-radius: 16px;
+    background: rgba(0, 0, 0, 0.22);
+    text-align: left;
+}
+.traveller-criteria {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.traveller-criteria-item {
+    padding: 6px 9px;
+    border: 1px solid rgba(255, 255, 255, 0.24);
+    border-radius: 999px;
+    color: rgba(255, 255, 255, 0.92);
+    font-size: 0.72rem;
+    font-weight: 800;
+    line-height: 1.1;
+}
+.traveller-region {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.traveller-label {
+    color: rgba(255, 255, 255, 0.68);
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
+}
+.traveller-region strong {
+    color: #ffffff;
+    font-size: 0.94rem;
+    line-height: 1.4;
+}
+
 .email-status.success {
     color: #6ee7b7;
 }
@@ -498,6 +544,10 @@ body {
 .bg-nebula { background: linear-gradient(135deg, #4c1d95 0%, #7c3aed 50%, #c084fc 100%); color: #fff; }
 .bg-berry { background: linear-gradient(135deg, #831843 0%, #db2777 50%, #f472b6 100%); color: #fff; }
 .bg-electric { background: linear-gradient(135deg, #0284c7 0%, #2563eb 50%, #4f46e5 100%); color: #fff; }
+.bg-traveller {
+    background: linear-gradient(135deg, #075985 0%, #0f766e 48%, #d97745 100%);
+    color: #fff;
+}
 .bg-north-bender {
     position: relative;
     display: flex;
@@ -846,6 +896,13 @@ body {
 
 .favorite-route-content span + span {
     font-size: 1.25rem;
+}
+
+.favorite-route-content .route-crag {
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 0.88rem;
+    font-weight: 700;
+    line-height: 1.3;
 }
 
 .gumby-card-content {

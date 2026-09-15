@@ -147,6 +147,32 @@ function getDeepestCrag(location) {
     return levels[levels.length - 1] || 'Other';
 }
 
+const usStates = new Set([
+    'Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado', 'Connecticut',
+    'Delaware', 'Florida', 'Georgia', 'Hawaii', 'Idaho', 'Illinois', 'Indiana', 'Iowa',
+    'Kansas', 'Kentucky', 'Louisiana', 'Maine', 'Maryland', 'Massachusetts', 'Michigan',
+    'Minnesota', 'Mississippi', 'Missouri', 'Montana', 'Nebraska', 'Nevada', 'New Hampshire',
+    'New Jersey', 'New Mexico', 'New York', 'North Carolina', 'North Dakota', 'Ohio',
+    'Oklahoma', 'Oregon', 'Pennsylvania', 'Rhode Island', 'South Carolina', 'South Dakota',
+    'Tennessee', 'Texas', 'Utah', 'Vermont', 'Virginia', 'Washington', 'West Virginia',
+    'Wisconsin', 'Wyoming'
+]);
+
+function getTravelRegions(location) {
+    const levels = String(location || '')
+        .split('>')
+        .map(level => level.trim())
+        .filter(Boolean);
+    const state = usStates.has(levels[0]) ? levels[0] : null;
+    const country = state
+        ? 'United States'
+        : levels[0] === 'International' && levels[2]
+            ? levels[2]
+            : null;
+
+    return { country, state };
+}
+
 function isEligibleHardestSend(tick) {
     const styles = String(tick['Style'] || '')
         .split(',')
@@ -245,6 +271,8 @@ function processTickList(ticks) {
     const uniqueChodeRoutes = new Set();
     let jiuJitsuBeltLevel = null;
     let northBendSends = 0;
+    const travelCountries = new Set();
+    const travelStates = new Set();
     let longestFellHungNote = null;
     let easiestFellHung = null;
     let longestNonFellHungNote = null;
@@ -277,6 +305,9 @@ function processTickList(ticks) {
         const location = String(tick['Location'] || '');
         const notes = String(tick['Notes'] || '').trim();
         const ratingCode = parseInt(tick['Rating Code'] || 0, 10);
+        const travelRegions = getTravelRegions(location);
+        if (travelRegions.country) travelCountries.add(travelRegions.country);
+        if (travelRegions.state) travelStates.add(travelRegions.state);
         if (Number.isFinite(length) && length > 0) {
             const routeStats = {
                 ...getRouteDetails(tick, notes),
@@ -344,14 +375,22 @@ function processTickList(ticks) {
     // Top Crags
     const topCrags = Object.entries(cragMap)
         .sort((a, b) => b[1] - a[1])
-        .slice(0, 4)
+        .slice(0, 5)
         .map(([name, count]) => ({ name, value: `${count} pitches` }));
 
     const favoriteRouteEntry = Object.entries(routeMap)
-        .sort((a, b) => b[1].ticks - a[1].ticks)[0];
-    const favoriteRoute = favoriteRouteEntry
-        ? { ...favoriteRouteEntry[1], name: favoriteRouteEntry[0] }
-        : null;
+        .sort((a, b) => b[1].ticks - a[1].ticks);
+    const favoriteRouteTicks = favoriteRouteEntry[0]?.[1].ticks || 0;
+    const favoriteRoutes = favoriteRouteTicks > 1
+        ? favoriteRouteEntry
+            .filter(([, route]) => route.ticks === favoriteRouteTicks)
+            .slice(0, 5)
+            .map(([name, route]) => ({ ...route, name }))
+        : [];
+    const favoriteRoute = favoriteRoutes.length === 1 ? favoriteRoutes[0] : null;
+    const travelCriteria = [];
+    if (travelCountries.size > 2) travelCriteria.push('More than 2 countries');
+    if (travelStates.size > 4) travelCriteria.push('More than 4 states');
 
     // Personas
     const totalStyles = typeCounts.Sport + typeCounts.Trad + typeCounts.Boulder || 1;
@@ -373,6 +412,10 @@ function processTickList(ticks) {
         },
         topCrags,
         favoriteRoute,
+        favoriteRoutes,
+        travelCountries: [...travelCountries].sort(),
+        travelStates: [...travelStates].sort(),
+        travelCriteria,
         longestRoute,
         shortestRoute,
         northBender: chodesRidden > 0 && jiuJitsuBeltLevel !== null
@@ -431,12 +474,30 @@ function buildCardsFromStats(stats) {
         }
     ];
 
-    if (stats.favoriteRoute) {
+    if (stats.travelCriteria?.length) {
+        cards.push({
+            id: "traveller",
+            theme: "bg-traveller",
+            subtitle: "you either are sponsored or live in a van, or both.",
+            title: "Traveller",
+            travelCriteria: stats.travelCriteria || [],
+            travelCountries: stats.travelCountries || [],
+            travelStates: stats.travelStates || [],
+            type: "traveller"
+        });
+    }
+
+    if (stats.favoriteRoutes.length) {
         cards.push({
             id: "favoriteRoute",
             theme: "bg-electric",
-            subtitle: "You really like this one I guess",
-            title: "Favorite Climbed Route",
+            subtitle: stats.favoriteRoutes.length === 1
+                ? "You really like this one I guess"
+                : "You really liked these for some reason",
+            title: stats.favoriteRoutes.length === 1
+                ? "Most Climbed Route"
+                : "Most Climbed Routes",
+            favoriteRoutes: stats.favoriteRoutes,
             favoriteRoute: stats.favoriteRoute,
             type: "favorite-route"
         });
@@ -457,7 +518,7 @@ function buildCardsFromStats(stats) {
         cards.push({
             id: "shortestRoute",
             theme: "bg-sunset",
-            subtitle: "A Quick One",
+            subtitle: "Heightism is not a joke",
             title: "Shortest Route",
             routeStats: stats.shortestRoute,
             type: "route-stats"
@@ -573,8 +634,22 @@ async function fetchUserTicks(inputUrl) {
     fetchUserBtn.disabled = true;
 
     try {
-        const response = await fetch(proxyUrl);
-        if (!response.ok) throw new Error('Network response was not ok');
+        let response;
+        let lastError;
+        for (const requestUrl of [targetUrl, proxyUrl]) {
+            try {
+                const candidate = await fetch(requestUrl);
+                if (candidate.ok) {
+                    response = candidate;
+                    break;
+                }
+                lastError = new Error(`Request failed with status ${candidate.status}`);
+            } catch (error) {
+                lastError = error;
+            }
+        }
+
+        if (!response) throw lastError || new Error('Could not fetch the tick export');
         
         const csvText = (await response.text()).replace(/^\uFEFF/, '');
         const firstLine = csvText.split(/\r?\n/, 1)[0] || '';
@@ -628,7 +703,8 @@ demoBtn.addEventListener('click', () => {
 function applyRouteImages() {
     cardsData.forEach((card, index) => {
         const slide = document.getElementById(`slide-${index}`);
-        const route = card.favoriteRoute || card.routeStats || card.angryMuch
+        const route = card.favoriteRoutes?.length === 1 ? card.favoriteRoutes[0]
+            : card.routeStats || card.angryMuch
             || card.gumbyMoment || card.saveForBlog;
         if (!slide || !route?.imageUrl) return;
 
@@ -709,6 +785,25 @@ function renderDeck() {
             innerHTML += `<div class="card-list anim-element anim-3">${listItems}</div>`;
         }
 
+        if (card.type === 'traveller') {
+            const criteriaItems = card.travelCriteria.map(criteria => `
+                <div class="traveller-criteria-item">${criteria}</div>
+            `).join('');
+            const countryItems = card.travelCountries.length
+                ? `<div class="traveller-region"><span class="traveller-label">Countries</span><strong>${card.travelCountries.join(' • ')}</strong></div>`
+                : '';
+            const stateItems = card.travelStates.length
+                ? `<div class="traveller-region"><span class="traveller-label">States</span><strong>${card.travelStates.join(' • ')}</strong></div>`
+                : '';
+            innerHTML += `
+                <div class="traveller-content anim-element anim-3">
+                    <div class="traveller-criteria">${criteriaItems}</div>
+                    ${countryItems}
+                    ${stateItems}
+                </div>
+            `;
+        }
+
         if (card.hardestSends) {
             const hardestItems = card.hardestSends.map(send => `
                 <div class="hardest-list-item">
@@ -754,13 +849,23 @@ function renderDeck() {
             `;
         }
 
-        if (card.favoriteRoute) {
+        if (card.favoriteRoutes?.length === 1) {
             innerHTML += `
                 <div class="favorite-route-content anim-element anim-3">
-                    <strong>${card.favoriteRoute.name}</strong>
-                    <span>${card.favoriteRoute.ticks} ticks</span>
+                    <strong>${card.favoriteRoutes[0].name}</strong>
+                    <span>${card.favoriteRoutes[0].ticks} ticks</span>
                 </div>
             `;
+        }
+
+        if (card.favoriteRoutes?.length > 1) {
+            const favoriteItems = card.favoriteRoutes.map(route => `
+                <div class="card-list-item">
+                    <span>${route.name}</span>
+                    <span>${route.ticks} ticks</span>
+                </div>
+            `).join('');
+            innerHTML += `<div class="card-list anim-element anim-3">${favoriteItems}</div>`;
         }
 
         if (card.routeStats) {
@@ -769,6 +874,7 @@ function renderDeck() {
                     <strong>${card.routeStats.name}</strong>
                     <span id="route-pitches-${i}">0 pitches</span>
                     <span id="route-feet-${i}">0 feet</span>
+                    <span class="route-crag">${getDeepestCrag(card.routeStats.location)}</span>
                 </div>
             `;
         }
@@ -954,10 +1060,17 @@ async function sendRopeEmail(event) {
     if (document.getElementById('emailWebsite').value) return;
 
     const name = document.getElementById('emailName').value.trim();
-    const address = document.getElementById('emailAddress').value.trim();
+    const emailAddressInput = document.getElementById('emailAddress');
+    const address = emailAddressInput.value.trim();
     const message = document.getElementById('emailMessage').value.trim();
     if (name.length > 100 || address.length > 254 || message.length > 2000) {
         setEmailStatus('Please shorten your message and try again.', 'error');
+        return;
+    }
+
+    if (!emailAddressInput.checkValidity() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address)) {
+        setEmailStatus('Please enter a valid email address so Kevin can reply.', 'error');
+        emailAddressInput.focus();
         return;
     }
 

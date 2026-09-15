@@ -16,25 +16,25 @@
                 <h1 class="title">Mountain Project<br>Wrapped</h1>
                 <p class="stat-label" style="margin-bottom: 30px;">See your climbing year in review.</p>
 
-                <!-- CSV Upload Option -->
-                <div class="input-card">
-                    <h3>Option 1: Upload CSV</h3>
-                    <p class="input-desc">Export your ticks file from Mountain Project profile.</p>
-                    <label class="file-btn" for="csvInput">Choose ticks.csv</label>
-                    <input type="file" id="csvInput" accept=".csv" style="display: none;">
-                    <span class="file-name" id="fileName">No file selected</span>
-                </div>
-
-                <div class="divider">OR</div>
-
                 <!-- Mountain Project Profile Link Option -->
                 <div class="input-card">
-                    <h3>Option 2: Profile URL</h3>
+                    <h3>Option 1: Profile URL</h3>
                     <p class="input-desc">Paste your MP profile link (e.g. mountainproject.com/user/200857562/...)</p>
                     <div class="input-group">
                         <input type="text" id="usernameInput" placeholder="https://www.mountainproject.com/user/200857562/chosslord-supreme">
                         <button class="action-btn-sm" id="fetchUserBtn">Go</button>
                     </div>
+                </div>
+
+                <div class="divider">OR</div>
+
+                <!-- CSV Upload Option -->
+                <div class="input-card">
+                    <h3>Option 2: Upload CSV</h3>
+                    <p class="input-desc">Export your ticks file from Mountain Project profile.</p>
+                    <label class="file-btn" for="csvInput">Choose ticks.csv</label>
+                    <input type="file" id="csvInput" accept=".csv" style="display: none;">
+                    <span class="file-name" id="fileName">No file selected</span>
                 </div>
 
                 <!-- Demo Button -->
@@ -65,7 +65,7 @@
                     <label for="emailName">Your name</label>
                     <input id="emailName" name="from_name" type="text" autocomplete="name" maxlength="100" required>
                     <label for="emailAddress">Your email</label>
-                    <input id="emailAddress" name="reply_to" type="email" autocomplete="email" maxlength="254" required>
+                    <input id="emailAddress" name="reply_to" type="email" autocomplete="email" maxlength="254" pattern="[^\s@]+@[^\s@]+\.[^\s@]+" required>
                     <label for="emailMessage">Message</label>
                     <textarea id="emailMessage" name="message" rows="4" maxlength="2000" required>I have an old rope for you.</textarea>
                     <input class="email-honeypot" id="emailWebsite" name="website" type="text" tabindex="-1" autocomplete="off" aria-hidden="true">
