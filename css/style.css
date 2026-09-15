@@ -525,6 +525,9 @@ body {
     z-index: 0;
     pointer-events: none;
     content: "";
+    transform-origin: center;
+    will-change: transform, opacity;
+    backface-visibility: hidden;
 }
 
 .bg-north-bender::before {
@@ -555,9 +558,7 @@ body {
 }
 
 .bg-north-bender.active::after {
-    background:
-        radial-gradient(ellipse at center, rgba(255, 255, 248, 0.88) 0 8%, rgba(255, 244, 194, 0.6) 18%, rgba(255, 214, 96, 0.22) 38%, transparent 66%),
-        radial-gradient(ellipse at center, transparent 0 48%, rgba(255, 255, 255, 0.36) 49%, transparent 52%);
+    background: radial-gradient(ellipse at center, rgba(255, 255, 248, 0.88) 0 8%, rgba(255, 244, 194, 0.6) 18%, rgba(255, 214, 96, 0.22) 38%, transparent 66%);
     transform: scale(0.5);
     opacity: 0;
     animation: northBendBurst 1.25s 0.08s cubic-bezier(0.16, 0.8, 0.24, 1) both;
@@ -586,7 +587,7 @@ body {
     align-items: center;
     justify-content: center;
     position: relative;
-    padding: 0.2em 0.62em 0.28em;
+    padding: 0.16em 0.5em 0.22em;
     margin: 0 0.06em;
     border: 1px solid rgba(255, 246, 188, 0.72);
     border-radius: 999px;
@@ -607,6 +608,15 @@ body {
     overflow: hidden;
 }
 
+.bg-north-bender .email-hit-area {
+    display: inline-block;
+    position: relative;
+    padding: 8px;
+    margin: -8px -6px;
+    vertical-align: middle;
+    cursor: pointer;
+}
+
 .bg-north-bender .email-link::before {
     position: absolute;
     inset: -35% -10%;
@@ -614,6 +624,10 @@ body {
     background: linear-gradient(120deg, transparent 35%, rgba(255, 225, 137, 0.3) 50%, transparent 65%);
     transform: translateX(-130%) skewX(-18deg);
     animation: northBendButtonShimmer 3s ease-in-out infinite;
+}
+
+.bg-north-bender .email-link::after {
+    display: none;
 }
 
 .bg-north-bender .email-link:hover,
@@ -1020,11 +1034,16 @@ body {
     .bg-north-bender .email-link {
         position: relative;
         z-index: 2;
-        min-height: 32px;
-        padding: 0.35rem 0.75rem 0.4rem;
+        min-height: 30px;
+        padding: 0.28rem 0.58rem 0.32rem;
         font-size: 0.84rem;
         line-height: 1;
         vertical-align: middle;
+    }
+
+    .bg-north-bender .email-hit-area {
+        padding: 7px;
+        margin: -7px -5px;
     }
 
     .email-modal {
@@ -1078,7 +1097,6 @@ body {
 
 @keyframes northBendBurst {
     0% { transform: scale(0.5); opacity: 0; }
-    18% { transform: scale(0.82); opacity: 0.95; }
-    42% { transform: scale(1.04); opacity: 0.72; }
+    34% { transform: scale(0.96); opacity: 0.82; }
     100% { transform: scale(1.42); opacity: 0; }
 }

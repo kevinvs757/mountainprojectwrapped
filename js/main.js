@@ -489,7 +489,7 @@ function buildCardsFromStats(stats) {
             theme: "bg-north-bender",
             subtitle: stats.northBender.uniqueChodeRoutes >= 4
                 ? "You really like chodes, huh?"
-                : 'You really like north bend. Do you have any <button class="email-link" id="oldRopeEmail" type="button">old ropes</button> to part with?',
+                : 'You really like north bend. Do you have any <span class="email-hit-area"><button class="email-link" id="oldRopeEmail" type="button">old ropes</button></span> to part with?',
             title: "Local Crusher",
             bonusStats: [
                 { label: "Chodes Ridden", value: stats.northBender.chodesRidden },
@@ -978,7 +978,7 @@ async function sendRopeEmail(event) {
 
 // Navigation Events
 document.addEventListener('click', event => {
-    if (event.target.closest('#oldRopeEmail')) {
+    if (event.target.closest('#oldRopeEmail, .email-hit-area')) {
         event.stopPropagation();
         openEmailModal();
     }
