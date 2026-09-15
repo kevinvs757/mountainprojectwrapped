@@ -700,7 +700,7 @@ function buildCardsFromStats(stats) {
             id: "saveForBlog",
             theme: "bg-sunset",
             subtitle: "Save it for your blog",
-            title: "The most you espoused on a send",
+            title: "The most you bloviated on a send",
             saveForBlog: stats.saveForBlog,
             type: "save-for-blog"
         });
