@@ -626,6 +626,18 @@ function applyRouteImages() {
 
         slide.classList.add('route-image-card');
         slide.style.setProperty('--route-image', `url("${route.imageUrl}")`);
+
+        const image = document.createElement('img');
+        image.className = 'route-image-layer';
+        image.alt = '';
+        image.setAttribute('aria-hidden', 'true');
+        image.src = route.imageUrl;
+        image.addEventListener('error', () => {
+            slide.classList.remove('route-image-card');
+            image.remove();
+            console.warn('Route image could not be loaded:', route.imageUrl);
+        }, { once: true });
+        slide.prepend(image);
     });
 }
 
