@@ -35,8 +35,20 @@ if (!$isValidProfileUrl || !in_array($feature, ['wrapped', 'heatmap'], true)
     exit;
 }
 
+$trackingStage = 'configuration';
+
 try {
-    $config = require '/home/mountain/private/mpwrapped-db.php';
+    $configPath = '/home/mountain/private/mpwrapped-db.php';
+    if (!is_readable($configPath)) {
+        throw new RuntimeException('Private database configuration is not readable');
+    }
+
+    $config = require $configPath;
+    if (!is_array($config) || !isset($config['host'], $config['database'], $config['username'], $config['password'])) {
+        throw new RuntimeException('Private database configuration is incomplete');
+    }
+
+    $trackingStage = 'database';
     $pdo = new PDO(
         sprintf('mysql:host=%s;dbname=%s;charset=utf8mb4', $config['host'], $config['database']),
         $config['username'],
@@ -52,5 +64,5 @@ try {
 } catch (Throwable $error) {
     error_log('Mountain Project Wrapped tracking error: ' . $error->getMessage());
     http_response_code(500);
-    echo json_encode(['error' => 'Tracking unavailable']);
+    echo json_encode(['error' => 'Tracking unavailable', 'diagnostic' => $trackingStage]);
 }
