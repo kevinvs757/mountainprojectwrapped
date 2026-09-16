@@ -503,22 +503,37 @@ async function fetchUserTicks(inputUrl) {
 
     try {
         let csvText = '';
-        for (const candidateUrl of [targetUrl, `https://r.jina.ai/http://${targetUrl.replace(/^https?:\/\//i, '')}`]) {
+        let lastError;
+        const jinaProxyUrl = `https://r.jina.ai/http://${targetUrl.replace(/^https?:\/\//i, '')}`;
+        const allOriginsProxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
+
+        for (const candidateUrl of [targetUrl, jinaProxyUrl, allOriginsProxyUrl]) {
             try {
                 const response = await fetch(candidateUrl);
-                if (!response.ok) continue;
-                const text = (await response.text()).replace(/^\uFEFF/, '');
-                if (text.includes('Date') && text.includes('Route')) {
-                    csvText = text.trim();
+                if (!response.ok) {
+                    lastError = new Error(`Request failed with status ${response.status}`);
+                    continue;
+                }
+
+                const responseText = (await response.text()).replace(/^\uFEFF/, '');
+                const headerMatch = responseText.match(/(?:^|\r?\n)(Date,Route,)/);
+                if (headerMatch) {
+                    const headerIndex = headerMatch.index + headerMatch[0].length - headerMatch[1].length;
+                    csvText = responseText.slice(headerIndex).trim();
                     break;
                 }
+                lastError = new Error('The response was not a Mountain Project tick export');
             } catch (error) {
-                // keep trying
+                lastError = error;
             }
         }
 
         if (!csvText) {
-            alert('Could not fetch that profile. Try uploading the CSV directly instead.');
+            throw lastError || new Error('Could not fetch the tick export');
+        }
+
+        if (parseCSV(csvText).length === 0) {
+            alert('No ticks found or user ticks are private.');
             return;
         }
 
