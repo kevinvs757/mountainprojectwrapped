@@ -1333,6 +1333,24 @@ body {
         padding: 56px 18px 32px;
     }
 
+    .input-card,
+    .email-modal,
+    .traveller-content,
+    .card-list,
+    .hardest-list {
+        backdrop-filter: none;
+    }
+
+    .input-card {
+        background: rgba(15, 23, 42, 0.82);
+    }
+
+    .traveller-content,
+    .card-list,
+    .hardest-list {
+        background: rgba(0, 0, 0, 0.4);
+    }
+
     .card-slide .subtitle {
         font-size: 0.72rem;
         letter-spacing: 1.2px;

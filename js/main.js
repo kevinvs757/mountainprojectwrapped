@@ -998,36 +998,11 @@ async function fetchUserTicks(inputUrl) {
         return;
     }
 
-    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
-    const jinaProxyUrl = `https://r.jina.ai/http://${targetUrl.replace(/^https?:\/\//i, '')}`;
-
     fetchUserBtn.textContent = 'Fetching...';
     fetchUserBtn.disabled = true;
 
     try {
-        let csvText;
-        let lastError;
-        for (const requestUrl of [targetUrl, jinaProxyUrl, proxyUrl]) {
-            try {
-                const candidate = await fetch(requestUrl);
-                if (candidate.ok) {
-                    const responseText = (await candidate.text()).replace(/^\uFEFF/, '');
-                    const headerMatch = responseText.match(/(?:^|\r?\n)(Date,Route,)/);
-                    if (headerMatch) {
-                        const headerIndex = headerMatch.index + headerMatch[0].length - headerMatch[1].length;
-                        csvText = responseText.slice(headerIndex).trim();
-                        break;
-                    }
-                    lastError = new Error('The response was not a Mountain Project tick export');
-                } else {
-                    lastError = new Error(`Request failed with status ${candidate.status}`);
-                }
-            } catch (error) {
-                lastError = error;
-            }
-        }
-
-        if (!csvText) throw lastError || new Error('Could not fetch the tick export');
+        const csvText = await fetchTickExport(targetUrl);
 
         const rows = parseCSV(csvText);
         
