@@ -1,0 +1,4 @@
+/config/mpwrapped-db.php
+/private/*
+!/private/mpwrapped-db.php.example
+/api/*.local.php

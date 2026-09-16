@@ -472,25 +472,12 @@ function hydrateState() {
 }
 
 function extractExportUrl(userInput) {
-    let input = String(userInput || '').trim();
-    if (!input) return null;
-    if (!input.startsWith('http://') && !input.startsWith('https://')) {
-        input = 'https://' + input;
-    }
-    try {
-        const url = new URL(input);
-        const pathParts = url.pathname.split('/').filter(Boolean);
-        if (pathParts[0] === 'user' && pathParts.length >= 3) {
-            return `https://www.mountainproject.com/user/${encodeURIComponent(pathParts[1])}/${encodeURIComponent(pathParts[2])}/tick-export`;
-        }
-    } catch (error) {
-        return null;
-    }
-    return null;
+    return getTickExportUrl(userInput);
 }
 
 async function fetchUserTicks(inputUrl) {
-    const targetUrl = extractExportUrl(inputUrl);
+    const profileUrl = canonicalizeProfileUrl(inputUrl);
+    const targetUrl = getTickExportUrl(profileUrl);
     if (!targetUrl) {
         alert('Invalid Mountain Project URL. Please paste a full link like https://www.mountainproject.com/user/12345678/example');
         return;
@@ -509,8 +496,9 @@ async function fetchUserTicks(inputUrl) {
             return;
         }
 
-        persistState(csvText, targetUrl);
+        persistState(csvText, profileUrl);
         getHeatmapDataFromCsvText(csvText);
+        trackFeatureAccess(profileUrl, 'heatmap', 'landing');
     } catch (error) {
         alert('Could not load the profile data right now.');
     } finally {
@@ -588,13 +576,17 @@ function boot() {
         showLanding();
     });
 
+    const urlParams = new URLSearchParams(window.location.search);
     const saved = hydrateState();
     if (saved.csvText) {
         getHeatmapDataFromCsvText(saved.csvText);
+        if (urlParams.get('source') === 'wrapped' && canonicalizeProfileUrl(saved.profileUrl)) {
+            trackFeatureAccess(saved.profileUrl, 'heatmap', 'wrapped-link');
+            window.history.replaceState({}, '', 'heatmap');
+        }
         return;
     }
 
-    const urlParams = new URLSearchParams(window.location.search);
     const encodedCsv = urlParams.get('csv');
     if (encodedCsv) {
         try {

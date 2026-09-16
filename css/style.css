@@ -1122,6 +1122,8 @@ body {
 }
 
 .final-actions {
+    position: relative;
+    z-index: 26;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -1316,6 +1318,20 @@ body {
 }
 
 @media (max-width: 499px) {
+    .card-slide[hidden] {
+        display: none;
+    }
+
+    .card-slide {
+        transition: none;
+        transform: none;
+        will-change: auto;
+    }
+
+    .card-slide.active .anim-element {
+        animation: none;
+    }
+
     .bg-north-bender {
         background:
             radial-gradient(120% 120% at 18% 12%, rgba(255, 235, 164, 0.66) 0%, rgba(255, 224, 133, 0.12) 18%, transparent 34%),

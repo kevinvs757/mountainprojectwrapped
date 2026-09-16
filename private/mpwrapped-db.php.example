@@ -1,0 +1,9 @@
+<?php
+declare(strict_types=1);
+
+return [
+    'host' => 'localhost',
+    'database' => 'mountain_db',
+    'username' => 'YOUR_CPANEL_DATABASE_USERNAME',
+    'password' => 'YOUR_GENERATED_DATABASE_PASSWORD',
+];

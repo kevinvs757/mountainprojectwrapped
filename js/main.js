@@ -968,30 +968,13 @@ function buildCardsFromStats(stats) {
 
 // --- Extract Export URL ---
 function extractExportUrl(userInput) {
-    let input = userInput.trim();
-    if (!input) return null;
-
-    if (!input.startsWith('http://') && !input.startsWith('https://')) {
-        input = 'https://' + input;
-    }
-
-    try {
-        const url = new URL(input);
-        const pathParts = url.pathname.split('/').filter(Boolean);
-
-        if (pathParts[0] === 'user' && pathParts.length >= 3) {
-            return `https://www.mountainproject.com/user/${encodeURIComponent(pathParts[1])}/${encodeURIComponent(pathParts[2])}/tick-export`;
-        }
-    } catch (e) {
-        return null;
-    }
-
-    return null;
+    return getTickExportUrl(userInput);
 }
 
 // --- Fetch User Ticks ---
 async function fetchUserTicks(inputUrl) {
-    const targetUrl = extractExportUrl(inputUrl);
+    const profileUrl = canonicalizeProfileUrl(inputUrl);
+    const targetUrl = getTickExportUrl(profileUrl);
 
     if (!targetUrl) {
         alert('Invalid Mountain Project URL.\n\nPlease paste a full link like:\nhttps://www.mountainproject.com/user/12345789/user-name');
@@ -1011,9 +994,10 @@ async function fetchUserTicks(inputUrl) {
             return;
         }
 
-        persistWrappedHeatmapState(csvText, targetUrl);
+        persistWrappedHeatmapState(csvText, profileUrl);
         const stats = processTickList(rows);
-        startWrapped(stats, { csvText, profileUrl: targetUrl });
+        startWrapped(stats, { csvText, profileUrl });
+        trackFeatureAccess(profileUrl, 'wrapped', 'landing');
     } catch (err) {
         alert('Could not fetch ticks from that profile URL. Download your ticks.csv and upload directly!');
     } finally {
@@ -1328,6 +1312,15 @@ function resetToLanding() {
     landingScreen.classList.add('active');
 }
 
+function syncMobileSlideVisibility(activeIndex) {
+    const isMobileViewport = window.matchMedia('(max-width: 499px)').matches;
+
+    cardsData.forEach((_, index) => {
+        const slide = document.getElementById(`slide-${index}`);
+        if (slide) slide.hidden = isMobileViewport && index !== activeIndex;
+    });
+}
+
 function goToSlide(index) {
     if (index < 0 || index >= cardsData.length) return;
 
@@ -1340,6 +1333,7 @@ function goToSlide(index) {
         const slide = document.getElementById(`slide-${i}`);
         if (slide) slide.classList.toggle('active', i === currentSlideIndex);
     });
+    syncMobileSlideVisibility(currentSlideIndex);
 
     cardsData.forEach((_, i) => {
         const fill = document.getElementById(`fill-${i}`);
@@ -1575,6 +1569,7 @@ document.getElementById('navLeft').addEventListener('click', () => {
     if (isPaused) resumePlayback();
     else prevSlide();
 });
+window.addEventListener('resize', () => syncMobileSlideVisibility(currentSlideIndex));
 document.addEventListener('keydown', (e) => {
     if (isPaused) {
         if (!emailModal.hidden) return;

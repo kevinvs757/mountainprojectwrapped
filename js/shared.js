@@ -20,6 +20,43 @@ function getDeepestCrag(location) {
         .replace(/\bWest\b/gi, 'W.');
 }
 
+function canonicalizeProfileUrl(userInput) {
+    let input = String(userInput || '').trim();
+    if (!input) return null;
+    if (!input.startsWith('http://') && !input.startsWith('https://')) input = `https://${input}`;
+
+    try {
+        const url = new URL(input);
+        const [resource, userId, slug] = url.pathname.split('/').filter(Boolean);
+        if (!/^(www\.)?mountainproject\.com$/i.test(url.hostname) || resource !== 'user'
+            || !/^\d{1,12}$/.test(userId || '') || !/^[a-z0-9-]+$/i.test(slug || '')) return null;
+        return `https://www.mountainproject.com/user/${userId}/${slug.toLowerCase()}`;
+    } catch (error) {
+        return null;
+    }
+}
+
+function getTickExportUrl(profileUrl) {
+    const canonicalProfileUrl = canonicalizeProfileUrl(profileUrl);
+    return canonicalProfileUrl ? `${canonicalProfileUrl}/tick-export` : null;
+}
+
+function trackFeatureAccess(profileUrl, feature, accessMethod) {
+    const canonicalProfileUrl = canonicalizeProfileUrl(profileUrl);
+    if (!canonicalProfileUrl) return;
+
+    fetch('api/track.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        keepalive: true,
+        body: JSON.stringify({
+            profile_url: canonicalProfileUrl,
+            feature,
+            access_method: accessMethod
+        })
+    }).catch(() => {});
+}
+
 async function fetchTickExport(targetUrl) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 15000);
