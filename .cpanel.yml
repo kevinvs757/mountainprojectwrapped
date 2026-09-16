@@ -3,6 +3,7 @@ deployment:
   tasks:
     - export DEPLOYPATH=/home/mountain/public_html
     - /bin/cp -R index.html $DEPLOYPATH/
+    - /bin/cp -R heatmap.html $DEPLOYPATH/
     - /bin/cp -R favicon.svg $DEPLOYPATH/
     - /bin/cp -R css $DEPLOYPATH/
     - /bin/cp -R js $DEPLOYPATH/

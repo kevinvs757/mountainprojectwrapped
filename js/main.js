@@ -58,6 +58,30 @@ let progressInterval = null;
 let startTime = 0;
 let progressElapsed = 0;
 let isPaused = false;
+let wrappedHeatmapState = { csvText: '', profileUrl: '' };
+
+function persistWrappedHeatmapState(csvText = '', profileUrl = '') {
+    wrappedHeatmapState = {
+        csvText: String(csvText || '').trim(),
+        profileUrl: String(profileUrl || '').trim()
+    };
+    sessionStorage.setItem('mpWrappedHeatmapState', JSON.stringify(wrappedHeatmapState));
+}
+
+function hydrateWrappedHeatmapState() {
+    try {
+        const rawState = sessionStorage.getItem('mpWrappedHeatmapState');
+        if (!rawState) return { csvText: '', profileUrl: '' };
+        const parsed = JSON.parse(rawState);
+        wrappedHeatmapState = {
+            csvText: String(parsed?.csvText || '').trim(),
+            profileUrl: String(parsed?.profileUrl || '').trim()
+        };
+        return wrappedHeatmapState;
+    } catch (error) {
+        return { csvText: '', profileUrl: '' };
+    }
+}
 
 // --- DOM Elements ---
 const landingScreen = document.getElementById('landingScreen');
@@ -169,28 +193,6 @@ function getTickYear(dateValue) {
     const dateText = String(dateValue || '').trim();
     const yearMatch = dateText.match(/\b(\d{4})\b/);
     return yearMatch ? Number(yearMatch[1]) : NaN;
-}
-
-function getDeepestCrag(location) {
-    const levels = String(location || '')
-        .split('>')
-        .map(level => level.trim())
-        .filter(Boolean);
-
-    if (levels.length === 0) return 'Other';
-    let result = levels[levels.length - 1];
-    if (levels.length >= 2) {
-        const directionalRegex = /\b(north|south|east|west|left|right|upper|lower|main)\b/i;
-        if (directionalRegex.test(result)) {
-            const parent = levels[levels.length - 2];
-            result = `${parent}, ${result}`;
-        }
-    }
-    return result
-        .replace(/\bNorth\b/gi, 'N')
-        .replace(/\bSouth\b/gi, 'S')
-        .replace(/\bEast\b/gi, 'E.')
-        .replace(/\bWest\b/gi, 'W.');
 }
 
 const usStates = new Set([
@@ -875,7 +877,7 @@ function buildCardsFromStats(stats) {
             id: "saveForBlog",
             theme: "bg-sunset",
             subtitle: "Save it for your blog",
-            title: "The most you bloviated on a send",
+            title: "The most you bloviated about a send",
             saveForBlog: stats.saveForBlog,
             type: "save-for-blog"
         });
@@ -950,11 +952,16 @@ function buildCardsFromStats(stats) {
             subtitle: "Way to go, kid",
             title: "Hardest Sends",
             hardestSends,
-            type: "hardest"
+            type: "hardest",
+            showFinalActions: true,
+            heatmapLink: "heatmap.html?source=wrapped"
         });
     }
 
-    if (cards.length) cards[cards.length - 1].showRestartBtn = true;
+    if (cards.length && !cards[cards.length - 1].showFinalActions) {
+        cards[cards.length - 1].showFinalActions = true;
+        cards[cards.length - 1].heatmapLink = "heatmap.html?source=wrapped";
+    }
 
     return cards;
 }
@@ -1029,8 +1036,9 @@ async function fetchUserTicks(inputUrl) {
             return;
         }
 
+        persistWrappedHeatmapState(csvText, targetUrl);
         const stats = processTickList(rows);
-        startWrapped(stats);
+        startWrapped(stats, { csvText, profileUrl: targetUrl });
     } catch (err) {
         alert('Could not fetch ticks from that profile URL. Download your ticks.csv and upload directly!');
     } finally {
@@ -1047,9 +1055,11 @@ csvInput.addEventListener('change', (e) => {
     fileName.textContent = file.name;
     const reader = new FileReader();
     reader.onload = (event) => {
-        const rows = parseCSV(event.target.result);
+        const csvText = event.target.result;
+        const rows = parseCSV(csvText);
         const stats = processTickList(rows);
-        startWrapped(stats);
+        persistWrappedHeatmapState(csvText, '');
+        startWrapped(stats, { csvText, profileUrl: '' });
     };
     reader.readAsText(file);
 });
@@ -1061,9 +1071,11 @@ fetchUserBtn.addEventListener('click', () => {
 });
 
 demoBtn.addEventListener('click', () => {
-    const rows = parseCSV(sampleData);
+    const csvText = sampleData;
+    const rows = parseCSV(csvText);
     const stats = processTickList(rows);
-    startWrapped(stats);
+    persistWrappedHeatmapState(csvText, '');
+    startWrapped(stats, { csvText, profileUrl: '' });
 });
 
 function applyRouteImages() {
@@ -1103,7 +1115,10 @@ function applyRouteImages() {
     });
 }
 
-function startWrapped(stats) {
+function startWrapped(stats, sourceInfo = {}) {
+    if (sourceInfo.csvText || sourceInfo.profileUrl) {
+        persistWrappedHeatmapState(sourceInfo.csvText || '', sourceInfo.profileUrl || '');
+    }
     cardsData = buildCardsFromStats(stats);
     landingScreen.classList.remove('active');
     pauseButton.hidden = false;
@@ -1309,7 +1324,14 @@ function renderDeck() {
 
         if (card.statLabel) innerHTML += `<p class="stat-label anim-element anim-3">${card.statLabel}</p>`;
         if (card.secondaryText) innerHTML += `<p class="subtitle anim-element anim-3" style="margin-top:20px;">${card.secondaryText}</p>`;
-        if (card.showRestartBtn) innerHTML += `<button class="action-btn anim-element anim-3" onclick="resetToLanding()">Replay / Upload New File 🔄</button>`;
+        if (card.showFinalActions) {
+            innerHTML += `
+                <div class="final-actions anim-element anim-3">
+                    <button class="action-btn final-replay-btn" onclick="resetToLanding()">Replay / Upload New File 🔄</button>
+                    <a class="heatmap-cta-button" href="${card.heatmapLink || 'heatmap.html?source=wrapped'}">Career Grade Heatmap <span aria-hidden="true">🔥</span></a>
+                </div>
+            `;
+        }
 
         slideEl.innerHTML = innerHTML;
         deckContainer.appendChild(slideEl);

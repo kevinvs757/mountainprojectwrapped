@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Climbing Grade Heatmap</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="css/heatmap.css">
+</head>
+<body>
+    <div class="app-container">
+        <div class="landing-screen active" id="landingScreen">
+            <div class="landing-content">
+                <p class="subtitle" id="heatmapSeasonLabel">Heatmap Edition</p>
+                <h1 class="title">Your Climbing<br>Grade Heatmap</h1>
+                <p class="stat-label" style="margin-bottom: 30px;">See how your grades stack up year by year.</p>
+
+                <div class="input-card">
+                    <h3>Option 1: Profile URL</h3>
+                    <p class="input-desc">Paste your MP profile link to refresh the heatmap automatically.</p>
+                    <div class="input-group">
+                        <input type="text" id="usernameInput" placeholder="https://www.mountainproject.com/user/200857562/chosslord-supreme">
+                        <button class="action-btn-sm" id="fetchUserBtn">Go</button>
+                    </div>
+                </div>
+
+                <div class="divider">OR</div>
+
+                <div class="input-card">
+                    <h3>Option 2: Upload CSV</h3>
+                    <p class="input-desc">Export your ticks file from Mountain Project profile.</p>
+                    <label class="file-btn" for="csvInput">Choose ticks.csv</label>
+                    <input type="file" id="csvInput" accept=".csv" style="display: none;">
+                    <span class="file-name" id="fileName">No file selected</span>
+                </div>
+
+                <button class="demo-btn" id="demoBtn">Use Sample Data</button>
+            </div>
+        </div>
+
+        <main class="heatmap-screen" id="heatmapScreen" hidden>
+            <header class="heatmap-header">
+                <h1 id="heatmapTitle">Climbing Grade Heatmap</h1>
+                <button id="resetBtn" class="ghost-btn" type="button">Use different data</button>
+            </header>
+
+            <fieldset class="tick-scope-toggle" id="tickScopeToggle">
+                <legend>Tick status</legend>
+                <label class="tick-scope-option">
+                    <input type="radio" name="tickScope" value="all" aria-label="All ticks">
+                    <span>All ticks</span>
+                </label>
+                <label class="tick-scope-option">
+                    <input type="radio" name="tickScope" value="sends" checked aria-label="Sends only">
+                    <span>Sends</span>
+                </label>
+            </fieldset>
+
+            <div class="grade-family-toggle" id="gradeFamilyToggle" aria-label="Grade family toggle">
+                <button class="grade-family-btn active" data-grade-family="all-roped" type="button">All Roped</button>
+                <button class="grade-family-btn" data-grade-family="boulder" type="button">Boulder</button>
+                <button class="grade-family-btn" data-grade-family="sport" type="button">Sport</button>
+                <button class="grade-family-btn" data-grade-family="trad" type="button">Trad</button>
+            </div>
+
+            <div class="heatmap-panel">
+                <div id="heatmapChart" class="heatmap-chart" aria-live="polite"></div>
+            </div>
+
+            <section class="summary-grid" id="summaryGrid"></section>
+        </main>
+    </div>
+
+    <div class="cell-modal" id="cellModal" hidden>
+        <div class="cell-modal-backdrop" data-modal-close="true"></div>
+        <section class="cell-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="cellModalTitle">
+            <header class="cell-modal-header">
+                <div>
+                    <p class="subtitle" id="cellModalEyebrow">Heatmap cell</p>
+                    <h2 id="cellModalTitle">Climbs</h2>
+                </div>
+                <button class="cell-modal-close" id="cellModalClose" type="button" aria-label="Close climb list">Close</button>
+            </header>
+            <div class="cell-modal-list" id="cellModalList"></div>
+        </section>
+    </div>
+
+    <script src="js/shared.js"></script>
+    <script src="js/heatmap.js"></script>
+</body>
+</html>
