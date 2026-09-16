@@ -180,7 +180,7 @@ function getDeepestCrag(location) {
     if (levels.length === 0) return 'Other';
     let result = levels[levels.length - 1];
     if (levels.length >= 2) {
-        const directionalRegex = /\b(north|south|east|west|left|right|upper|lower)\b/i;
+        const directionalRegex = /\b(north|south|east|west|left|right|upper|lower|main)\b/i;
         if (directionalRegex.test(result)) {
             const parent = levels[levels.length - 2];
             result = `${parent}, ${result}`;
@@ -240,8 +240,70 @@ function getRouteDetails(tick, notes = '') {
         grade: tick['Rating'] || 'Unknown',
         note: notes,
         url: getRouteUrl(tick),
-        location: tick['Location'] || ''
+        location: tick['Location'] || '',
+        routeType: tick['Route Type'] ? String(tick['Route Type']).trim() : '',
+        yourRating: tick['Your Rating'] ? String(tick['Your Rating']).trim() : null,
+        avgStars: parseFloat(tick['Avg Stars']) || null
     };
+}
+
+// Mountain Project difficulty rating code lookup map
+const mpRatingScores = {
+    '3rd': 800, '4th': 900, 'easy 5th': 950,
+    '5.0': 1000, '5.1': 1100, '5.2': 1200, '5.3': 1300, '5.4': 1400,
+    '5.5': 1500, '5.6': 1600, '5.7-': 1700, '5.7': 1800, '5.7+': 1900,
+    '5.8-': 2000, '5.8': 2100, '5.8+': 2200, '5.9-': 2300, '5.9': 2400, '5.9+': 2500,
+    '5.10a': 2600, '5.10-': 2700, '5.10a/b': 2800, '5.10b': 2900, '5.10': 3000,
+    '5.10b/c': 3100, '5.10c': 3200, '5.10+': 3300, '5.10c/d': 3400, '5.10d': 3500,
+    '5.11a': 4600, '5.11-': 4700, '5.11a/b': 4800, '5.11b': 4900, '5.11': 5000,
+    '5.11b/c': 5100, '5.11c': 5200, '5.11+': 5300, '5.11c/d': 5400, '5.11d': 5500,
+    '5.12a': 6600, '5.12-': 6700, '5.12a/b': 6800, '5.12b': 6900, '5.12': 7000,
+    '5.12b/c': 7100, '5.12c': 7200, '5.12+': 7300, '5.12c/d': 7400, '5.12d': 7500,
+    '5.13a': 8600, '5.13-': 8700, '5.13a/b': 8800, '5.13b': 8900, '5.13': 9000,
+    '5.13b/c': 9100, '5.13c': 9200, '5.13+': 9300, '5.13c/d': 9400, '5.13d': 9500,
+    '5.14a': 10600, '5.14b': 10900, '5.14c': 11200, '5.14d': 11500,
+    '5.15a': 12600, '5.15b': 12900, '5.15c': 13200, '5.15d': 13500,
+    // V-Grades (Bouldering on MP starts at 20000)
+    'v-easy': 20000, 'v0-': 20005, 'v0': 20008, 'v0+': 20010,
+    'v0-1': 20050, 'v1-': 20075, 'v1': 20100, 'v1+': 20110,
+    'v1-2': 20150, 'v2-': 20170, 'v2': 20200, 'v2+': 20210,
+    'v2-3': 20250, 'v3-': 20270, 'v3': 20300, 'v3+': 20310,
+    'v3-4': 20350, 'v4-': 20370, 'v4': 20400, 'v4+': 20410,
+    'v4-5': 20450, 'v5-': 20470, 'v5': 20500, 'v5+': 20510,
+    'v5-6': 20550, 'v6-': 20570, 'v6': 20600, 'v6+': 20610,
+    'v6-7': 20650, 'v7-': 20670, 'v7': 20700, 'v7+': 20710,
+    'v7-8': 20750, 'v8-': 20770, 'v8': 20800, 'v8+': 20810,
+    'v8-9': 20850, 'v9-': 20870, 'v9': 20900, 'v9+': 20910,
+    'v9-10': 20950, 'v10-': 20970, 'v10': 21000, 'v10+': 21010,
+    'v10-11': 21050, 'v11': 21100, 'v12': 21200, 'v13': 21300,
+    'v14': 21400, 'v15': 21500, 'v16': 21600, 'v17': 21700
+};
+
+function extractPrimaryGrade(gradeStr) {
+    if (!gradeStr) return '';
+    const tokens = String(gradeStr).trim().split(/[\s,]+/);
+    for (const t of tokens) {
+        const clean = t.toLowerCase();
+        if (clean.startsWith('5.') || mpRatingScores[clean] !== undefined) {
+            return clean;
+        }
+    }
+    for (const t of tokens) {
+        const clean = t.toLowerCase();
+        if (clean.startsWith('v')) {
+            return clean;
+        }
+    }
+    return tokens[0].toLowerCase();
+}
+
+function getMpDifficultyScore(grade) {
+    if (!grade) return -1;
+    const primary = extractPrimaryGrade(grade);
+    if (mpRatingScores[primary] !== undefined) {
+        return mpRatingScores[primary];
+    }
+    return -1;
 }
 
 function isNiceValue(val) {
@@ -301,7 +363,10 @@ async function enrichRouteImages(stats) {
         stats.shortestRoute,
         stats.angryMuch,
         stats.gumbyMoment,
-        stats.saveForBlog
+        stats.saveForBlog,
+        stats.starChaserRoute,
+        stats.chossConnoisseurRoute,
+        stats.sandbagJudge?.route
     ].filter(route => route?.url);
     const uniqueRoutes = [...new Map(routes.map(route => [route.url, route])).values()];
 
@@ -324,11 +389,16 @@ function processTickList(ticks, targetSeasonYear = currentSeasonYear) {
 
     const cragMap = {};
     const routeMap = {};
+    const ratedRouteMap = new Map();
     let longestRoute = null;
     let shortestRoute = null;
     const typeCounts = { Sport: 0, Trad: 0, TopRope: 0, Boulder: 0 };
     let totalTicks = 0;
     const climbingDays = new Set();
+    let weekdayTicks = 0;
+    let weekendTicks = 0;
+    let biggestDowngrade = null; // { route, consensus, yourRating, diff }
+    let biggestUpgrade = null;   // { route, consensus, yourRating, diff }
     let chodesRidden = 0;
     const uniqueChodeRoutes = new Set();
     let jiuJitsuBeltLevel = null;
@@ -347,6 +417,15 @@ function processTickList(ticks, targetSeasonYear = currentSeasonYear) {
         if (dateText) {
             const cleanDate = dateText.split('T')[0].split(' ')[0];
             climbingDays.add(cleanDate);
+            const dateObj = new Date(cleanDate);
+            if (!isNaN(dateObj.getTime())) {
+                const day = dateObj.getDay();
+                if (day === 0 || day === 6) {
+                    weekendTicks++;
+                } else {
+                    weekdayTicks++;
+                }
+            }
         }
 
         // Pitches & Elevation
@@ -383,9 +462,60 @@ function processTickList(ticks, targetSeasonYear = currentSeasonYear) {
         const location = String(tick['Location'] || '');
         const notes = String(tick['Notes'] || '').trim();
         const ratingCode = parseInt(tick['Rating Code'] || 0, 10);
+        const avgStars = parseFloat(tick['Avg Stars']);
+        const yourRating = tick['Your Rating'] ? String(tick['Your Rating']).trim() : '';
+        const consensusRating = tick['Rating'] ? String(tick['Rating']).trim() : '';
+
+        // Star stats tracking: one valid rating per unique route.
+        if (Number.isFinite(avgStars) && avgStars > 0 && avgStars <= 5) {
+            const routeDetails = getRouteDetails(tick, notes);
+            const routeKey = getRouteUrl(tick)?.replace(/[?#].*$/, '').replace(/\/$/, '').toLowerCase()
+                || `${routeDetails.name.toLowerCase()}|${routeDetails.location.toLowerCase()}`;
+            if (!ratedRouteMap.has(routeKey)) {
+                ratedRouteMap.set(routeKey, { ...routeDetails, avgStars });
+            }
+        }
+
+        // Personal grade difference tracking using Mountain Project difficulty rating codes
+        if (yourRating && consensusRating && isEligibleHardestSend(tick)) {
+            const consensusScore = getMpDifficultyScore(consensusRating) > 0
+                ? getMpDifficultyScore(consensusRating)
+                : (Number.isFinite(ratingCode) && ratingCode > 0 ? ratingCode : -1);
+            const yourScore = getMpDifficultyScore(yourRating);
+            if (consensusScore > 0 && yourScore > 0 && Math.abs(yourScore - consensusScore) >= 1200) {
+                const diff = yourScore - consensusScore;
+                const routeDetails = getRouteDetails(tick, notes);
+                const isTrad = (tick['Route Type'] || '').includes('Trad');
+                if (diff < 0) {
+                    // Downgraded (Sandbagger)
+                    if (!biggestDowngrade || Math.abs(diff) > Math.abs(biggestDowngrade.diff)) {
+                        biggestDowngrade = {
+                            route: routeDetails,
+                            consensus: consensusRating,
+                            yourRating,
+                            diff: Math.abs(diff),
+                            isTrad
+                        };
+                    }
+                } else if (diff > 0) {
+                    // Upgraded (Victim)
+                    if (!biggestUpgrade || diff > biggestUpgrade.diff) {
+                        biggestUpgrade = {
+                            route: routeDetails,
+                            consensus: consensusRating,
+                            yourRating,
+                            diff,
+                            isTrad
+                        };
+                    }
+                }
+            }
+        }
+
         const travelRegions = getTravelRegions(location);
         if (travelRegions.country) travelCountries.add(travelRegions.country);
         if (travelRegions.state) travelStates.add(travelRegions.state);
+        const isBoulderRoute = category === 'Boulder' || routeType.includes('Boulder');
         if (Number.isFinite(length) && length > 0) {
             const routeStats = {
                 ...getRouteDetails(tick, notes),
@@ -394,7 +524,7 @@ function processTickList(ticks, targetSeasonYear = currentSeasonYear) {
             };
 
             if (!longestRoute || length > longestRoute.feet) longestRoute = routeStats;
-            if (!shortestRoute || length < shortestRoute.feet) shortestRoute = routeStats;
+            if (!isBoulderRoute && (!shortestRoute || length < shortestRoute.feet)) shortestRoute = routeStats;
         }
         if (routeName) {
             if (!routeMap[routeName]) routeMap[routeName] = { ticks: 0, ...getRouteDetails(tick, notes) };
@@ -471,6 +601,44 @@ function processTickList(ticks, targetSeasonYear = currentSeasonYear) {
     if (travelCountries.size > 2) travelCriteria.push('More than 2 countries');
     if (travelStates.size > 5) travelCriteria.push('More than 5 states');
 
+    // Star Averages & Route Quality
+    const ratedRoutes = [...ratedRouteMap.values()];
+    const ratedRoutesCount = ratedRoutes.length;
+    const totalStars = ratedRoutes.reduce((sum, route) => sum + route.avgStars, 0);
+    const avgOverallStars = ratedRoutesCount > 0 ? totalStars / ratedRoutesCount : null;
+    const mostStarredRoute = ratedRoutes.reduce((best, route) =>
+        !best || route.avgStars > best.avgStars ? route : best, null);
+    const leastStarredRoute = ratedRoutes.reduce((worst, route) =>
+        !worst || route.avgStars < worst.avgStars ? route : worst, null);
+    const lowStarRoutesCount = ratedRoutes.filter(route => route.avgStars < 2.0).length;
+    const lowStarRoutePercent = ratedRoutesCount > 0
+        ? (lowStarRoutesCount / ratedRoutesCount) * 100
+        : 0;
+    const starHunter = ratedRoutesCount > 0
+        ? {
+            avgStars: avgOverallStars.toFixed(1),
+            ratedRoutesCount,
+            lowStarRoutesCount,
+            lowStarRoutePercent: lowStarRoutePercent.toFixed(1),
+            isHighQuality: ratedRoutesCount >= 5 && avgOverallStars > 3.2,
+            isChossLover: ratedRoutesCount >= 10 && lowStarRoutePercent > 8,
+            highQualityRoute: mostStarredRoute,
+            chossRoute: leastStarredRoute
+        }
+        : null;
+
+    // Schedule Persona: Corporate Fugitive vs Weekend Warrior
+    const schedulePersona = totalTicks >= 5
+        ? (weekdayTicks > weekendTicks
+            ? { title: "Corporate Fugitive", subtitle: "Slack status: 'In a meeting' (on the wall)", weekdayTicks, weekendTicks }
+            : { title: "Weekend Warrior", subtitle: "Living for the 48-hour send window", weekdayTicks, weekendTicks })
+        : null;
+
+    // Sandbag Judge
+    const sandbagJudge = biggestDowngrade
+        ? { type: 'downgrade', ...biggestDowngrade }
+        : (biggestUpgrade ? { type: 'upgrade', ...biggestUpgrade } : null);
+
     // Personas
     const totalStyles = typeCounts.Sport + typeCounts.Trad + typeCounts.TopRope + typeCounts.Boulder || 1;
     const sportPct = Math.round((typeCounts.Sport / totalStyles) * 100);
@@ -478,7 +646,7 @@ function processTickList(ticks, targetSeasonYear = currentSeasonYear) {
     const trPct = Math.round((typeCounts.TopRope / totalStyles) * 100);
     const boulderPct = Math.round((typeCounts.Boulder / totalStyles) * 100);
 
-    let persona = "Weekend Warrior";
+    let persona = "Any way up the rock";
     if (trPct > 40) persona = "TopRope Tough Guy/Gal";
     else if (tradPct > 40) persona = "Trad Dad/Mom";
     else if (sportPct > 60) persona = "Bolt Clipper";
@@ -499,6 +667,11 @@ function processTickList(ticks, targetSeasonYear = currentSeasonYear) {
         totalPitches,
         totalTicks,
         totalDaysClimbed: climbingDays.size,
+        weekdayTicks,
+        weekendTicks,
+        schedulePersona,
+        starHunter,
+        sandbagJudge,
         hardestSends: {
             Sport: maxSends.Sport.code !== -1 ? maxSends.Sport : null,
             Trad: maxSends.Trad.code !== -1 ? maxSends.Trad : null,
@@ -512,6 +685,8 @@ function processTickList(ticks, targetSeasonYear = currentSeasonYear) {
         travelCriteria,
         longestRoute,
         shortestRoute,
+        starChaserRoute: starHunter?.isHighQuality ? starHunter.highQualityRoute : null,
+        chossConnoisseurRoute: starHunter?.isChossLover ? starHunter.chossRoute : null,
         northBender: northBendSends >= 20 || (chodesRidden > 0 && jiuJitsuBeltLevel !== null)
             ? { northBendSends, chodesRidden, uniqueChodeRoutes: uniqueChodeRoutes.size, jiuJitsuBeltLevel }
             : null,
@@ -703,6 +878,68 @@ function buildCardsFromStats(stats) {
             title: "The most you bloviated on a send",
             saveForBlog: stats.saveForBlog,
             type: "save-for-blog"
+        });
+    }
+
+    if (stats.schedulePersona) {
+        cards.push({
+            id: "schedulePersona",
+            theme: "bg-electric",
+            subtitle: stats.schedulePersona.subtitle,
+            title: stats.schedulePersona.title,
+            dualStats: [
+                {
+                    value: stats.schedulePersona.weekdayTicks,
+                    label: "Weekday Ticks",
+                    id: "weekday-ticks"
+                },
+                {
+                    value: stats.schedulePersona.weekendTicks,
+                    label: "Weekend Ticks",
+                    id: "weekend-ticks"
+                }
+            ],
+            type: "dual-counter"
+        });
+    }
+
+    if (stats.starHunter) {
+        if (stats.starHunter.isHighQuality && stats.starHunter.representativeRoute) {
+            cards.push({
+                id: "starChaser",
+                theme: "bg-sunset",
+                subtitle: "You only climb if 400 people on the internet approved it first",
+                title: "Star Chaser",
+                statLabel: `Average Quality: ${stats.starHunter.avgStars} ★ across ${stats.starHunter.ratedRoutesCount} routes`,
+                starRoute: stats.starHunter.highQualityRoute,
+                type: "star-route"
+            });
+        }
+        if (stats.starHunter.isChossLover && stats.starHunter.chossRoute) {
+            cards.push({
+                id: "chossConnoisseur",
+                theme: "bg-berry",
+                subtitle: "Why are you climbing 1.8-star mud gullies?",
+                title: "Choss Connoisseur",
+                statLabel: `${stats.starHunter.lowStarRoutesCount} of ${stats.starHunter.ratedRoutesCount} routes below 2.0 ★ (${stats.starHunter.lowStarRoutePercent}%)`,
+                starRoute: stats.starHunter.chossRoute,
+                type: "star-route"
+            });
+        }
+    }
+
+    if (stats.sandbagJudge) {
+        cards.push({
+            id: "sandbagJudge",
+            theme: stats.sandbagJudge.type === 'downgrade' ? "bg-nebula" : "bg-emerald",
+            subtitle: stats.sandbagJudge.type === 'downgrade'
+                ? "Ego Downgrade"
+                : "Grade Discrepancy",
+            title: stats.sandbagJudge.type === 'downgrade'
+                ? "Sandbagger"
+                : "The Victim",
+            sandbagJudge: stats.sandbagJudge,
+            type: "sandbag"
         });
     }
 
@@ -913,13 +1150,17 @@ function renderDeck() {
         if (card.badge) innerHTML += `<div class="badge anim-element anim-3">${card.badge}</div>`;
 
         if (card.list) {
+            const isWorldWallTop = card.id === 'topCrags' && card.list.length > 0 && /world\s*wall/i.test(card.list[0].name);
+            const worldWallStickerMarkup = isWorldWallTop
+                ? `<span class="world-wall-sticker" aria-hidden="true">World Wall Climber</span>`
+                : '';
             const listItems = card.list.map((item, idx) => `
                 <div class="card-list-item">
                     <span>${idx + 1}. ${item.name}</span>
                     <span>${wrapWithNiceSticker(item.value, item.value)}</span>
                 </div>
             `).join('');
-            innerHTML += `<div class="card-list anim-element anim-3">${listItems}</div>`;
+            innerHTML += `<div class="card-list anim-element anim-3">${worldWallStickerMarkup}${listItems}</div>`;
         }
 
         if (card.type === 'traveller') {
@@ -1026,6 +1267,42 @@ function renderDeck() {
                     <span class="angry-grade">${card.saveForBlog.grade}</span>
                     <span class="route-crag">${getDeepestCrag(card.saveForBlog.location)}</span>
                     <blockquote>"${card.saveForBlog.note}"</blockquote>
+                </div>
+            `;
+        }
+
+        if (card.starRoute) {
+            innerHTML += `
+                <div class="angry-card-content anim-element anim-3">
+                    <span class="intro-label">Consensus: ${card.starRoute.avgStars ? card.starRoute.avgStars + ' ★' : ''}</span>
+                    <strong>${card.starRoute.name}</strong>
+                    <span class="angry-grade">${card.starRoute.grade}</span>
+                    <span class="route-crag">${getDeepestCrag(card.starRoute.location)}</span>
+                    ${card.starRoute.note ? `<blockquote>"${card.starRoute.note}"</blockquote>` : ''}
+                </div>
+            `;
+        }
+
+        if (card.sandbagJudge) {
+            const isDowngrade = card.sandbagJudge.type === 'downgrade';
+            let phrase = '';
+            if (isDowngrade) {
+                if (card.sandbagJudge.isTrad) {
+                    phrase = `You took that ${card.sandbagJudge.consensus} and logged it as ${card.sandbagJudge.yourRating}. They just don't know how to climb crack`;
+                } else {
+                    phrase = `You took that ${card.sandbagJudge.consensus} and logged it as ${card.sandbagJudge.yourRating}. Congrats you're either tall, old, or full of shit`;
+                }
+            } else {
+                phrase = `You called that ${card.sandbagJudge.consensus} a ${card.sandbagJudge.yourRating}. We believe you.`;
+            }
+
+            innerHTML += `
+                <div class="angry-card-content anim-element anim-3">
+                    <span class="intro-label">${phrase}</span>
+                    <strong>${card.sandbagJudge.route.name}</strong>
+                    <span class="angry-grade">${card.sandbagJudge.yourRating} <small style="font-size:1rem; opacity:0.8; font-weight:600;">(vs ${card.sandbagJudge.consensus})</small></span>
+                    <span class="route-crag">${getDeepestCrag(card.sandbagJudge.route.location)}</span>
+                    ${card.sandbagJudge.route.note ? `<blockquote>"${card.sandbagJudge.route.note}"</blockquote>` : ''}
                 </div>
             `;
         }

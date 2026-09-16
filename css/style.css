@@ -788,6 +788,10 @@ body {
 
 /* --- Nice Sticker --- */
 .nice-sticker {
+    --sticker-angle: 15deg;
+    --sticker-entry-angle: 42deg;
+    --sticker-impact-angle: 12deg;
+    --sticker-bounce-angle: 16.5deg;
     position: absolute;
     top: -10px;
     right: -12px;
@@ -825,23 +829,68 @@ body {
     right: -6px;
 }
 
-@keyframes slapSticker {
+.world-wall-sticker {
+    position: absolute;
+    top: -12px;
+    left: -12px;
+    z-index: 10;
+    background: #ffeb3b;
+    color: #000000;
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    padding: 3px 8px 2px;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35), 0 1px 3px rgba(0, 0, 0, 0.25);
+    pointer-events: none;
+    user-select: none;
+    transform: rotate(-15deg);
+    transform-origin: center center;
+}
+
+.card-slide.active .world-wall-sticker {
+    animation: slapWorldWallSticker 0.42s 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+}
+
+@keyframes slapWorldWallSticker {
     0% {
         opacity: 0;
-        transform: scale(3.2) rotate(42deg) translateY(-24px);
+        transform: scale(3.2) rotate(-42deg) translateY(-24px);
         filter: drop-shadow(0 20px 20px rgba(0, 0, 0, 0.5));
     }
     55% {
         opacity: 1;
-        transform: scale(0.9) rotate(12deg) translateY(0);
+        transform: scale(0.96) rotate(-12deg) translateY(0);
         filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.25));
     }
     78% {
-        transform: scale(1.08) rotate(16.5deg);
+        transform: scale(1.03) rotate(-15.5deg);
     }
     100% {
         opacity: 1;
-        transform: scale(1) rotate(15deg);
+        transform: scale(1) rotate(-15deg);
+        filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.35));
+    }
+}
+
+@keyframes slapSticker {
+    0% {
+        opacity: 0;
+        transform: scale(3.2) rotate(var(--sticker-entry-angle)) translateY(-24px);
+        filter: drop-shadow(0 20px 20px rgba(0, 0, 0, 0.5));
+    }
+    55% {
+        opacity: 1;
+        transform: scale(0.9) rotate(var(--sticker-impact-angle)) translateY(0);
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.25));
+    }
+    78% {
+        transform: scale(1.08) rotate(var(--sticker-bounce-angle));
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) rotate(var(--sticker-angle));
         filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.35));
     }
 }
@@ -870,6 +919,7 @@ body {
 }
 
 .card-list {
+    position: relative;
     width: 100%;
     max-width: 320px;
     background: rgba(0, 0, 0, 0.25);
