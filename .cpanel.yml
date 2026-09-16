@@ -5,5 +5,7 @@ deployment:
     - /bin/cp -R index.html $DEPLOYPATH/
     - /bin/cp -R heatmap.html $DEPLOYPATH/
     - /bin/cp -R favicon.svg $DEPLOYPATH/
-    - /bin/cp -R css $DEPLOYPATH/
-    - /bin/cp -R js $DEPLOYPATH/
+    - /bin/cp -R .htaccess $DEPLOYPATH/
+    - /bin/mkdir -p $DEPLOYPATH/css $DEPLOYPATH/js
+    - /bin/cp -R css/. $DEPLOYPATH/css/
+    - /bin/cp -R js/. $DEPLOYPATH/js/

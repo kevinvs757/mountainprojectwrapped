@@ -954,13 +954,13 @@ function buildCardsFromStats(stats) {
             hardestSends,
             type: "hardest",
             showFinalActions: true,
-            heatmapLink: "heatmap.html?source=wrapped"
+            heatmapLink: "heatmap?source=wrapped"
         });
     }
 
     if (cards.length && !cards[cards.length - 1].showFinalActions) {
         cards[cards.length - 1].showFinalActions = true;
-        cards[cards.length - 1].heatmapLink = "heatmap.html?source=wrapped";
+        cards[cards.length - 1].heatmapLink = "heatmap?source=wrapped";
     }
 
     return cards;
@@ -1328,7 +1328,7 @@ function renderDeck() {
             innerHTML += `
                 <div class="final-actions anim-element anim-3">
                     <button class="action-btn final-replay-btn" onclick="resetToLanding()">Replay / Upload New File 🔄</button>
-                    <a class="heatmap-cta-button" href="${card.heatmapLink || 'heatmap.html?source=wrapped'}">Career Grade Heatmap <span aria-hidden="true">🔥</span></a>
+                    <a class="heatmap-cta-button" href="${card.heatmapLink || 'heatmap?source=wrapped'}">Career Grade Heatmap <span aria-hidden="true">🔥</span></a>
                 </div>
             `;
         }
