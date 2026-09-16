@@ -616,6 +616,8 @@ function processTickList(ticks, targetSeasonYear = currentSeasonYear) {
     const lowStarRoutePercent = ratedRoutesCount > 0
         ? (lowStarRoutesCount / ratedRoutesCount) * 100
         : 0;
+    const qualifiesByLowStarPercent = lowStarRoutePercent >= 15;
+    const qualifiesByLowStarVolume = lowStarRoutesCount >= 10;
     const starHunter = ratedRoutesCount > 0
         ? {
             avgStars: avgOverallStars.toFixed(1),
@@ -623,7 +625,8 @@ function processTickList(ticks, targetSeasonYear = currentSeasonYear) {
             lowStarRoutesCount,
             lowStarRoutePercent: lowStarRoutePercent.toFixed(1),
             isHighQuality: ratedRoutesCount >= 5 && avgOverallStars > 3.2,
-            isChossLover: ratedRoutesCount >= 10 && lowStarRoutePercent > 8,
+            isChossLover: qualifiesByLowStarPercent || qualifiesByLowStarVolume,
+            chossQualification: qualifiesByLowStarVolume ? 'volume' : 'percent',
             highQualityRoute: mostStarredRoute,
             chossRoute: leastStarredRoute
         }
@@ -648,7 +651,7 @@ function processTickList(ticks, targetSeasonYear = currentSeasonYear) {
     const trPct = Math.round((typeCounts.TopRope / totalStyles) * 100);
     const boulderPct = Math.round((typeCounts.Boulder / totalStyles) * 100);
 
-    let persona = "Any way up the rock";
+    let persona = "Swiss Army Dirtbag";
     if (trPct > 40) persona = "TopRope Tough Guy/Gal";
     else if (tradPct > 40) persona = "Trad Dad/Mom";
     else if (sportPct > 60) persona = "Bolt Clipper";
@@ -873,11 +876,16 @@ function buildCardsFromStats(stats) {
     }
 
     if (stats.saveForBlog) {
+        const longCommentVerbs = [
+            'expounded', 'bloviated', 'pontificated', 'rattled on', 'waxed poetic',
+            'babbled on', 'blathered on', 'prattled on', 'proselytized', 'soapboxed', 'spouted off'
+        ];
+        const longCommentVerb = longCommentVerbs[new Date().getMilliseconds() % longCommentVerbs.length];
         cards.push({
             id: "saveForBlog",
             theme: "bg-sunset",
             subtitle: "Save it for your blog",
-            title: "The most you bloviated about a send",
+            title: `The most you ${longCommentVerb} about a send`,
             saveForBlog: stats.saveForBlog,
             type: "save-for-blog"
         });
@@ -918,13 +926,20 @@ function buildCardsFromStats(stats) {
             });
         }
         if (stats.starHunter.isChossLover && stats.starHunter.chossRoute) {
+            const chossStatLabel = stats.starHunter.chossQualification === 'volume'
+                ? `you ticked ${stats.starHunter.lowStarRoutesCount} routes below 2.0 ★`
+                : `${stats.starHunter.lowStarRoutePercent}% of your routes were below 2.0 ★`;
             cards.push({
                 id: "chossConnoisseur",
                 theme: "bg-berry",
                 subtitle: "Why are you climbing 1.8-star mud gullies?",
                 title: "Choss Connoisseur",
-                statLabel: `${stats.starHunter.lowStarRoutesCount} of ${stats.starHunter.ratedRoutesCount} routes below 2.0 ★ (${stats.starHunter.lowStarRoutePercent}%)`,
+                statLabel: chossStatLabel,
                 starRoute: stats.starHunter.chossRoute,
+                starRouteIntro: 'Your lowest-star tick',
+                starRouteDisplayRating: stats.starHunter.chossRoute.avgStars
+                    ? `${stats.starHunter.chossRoute.avgStars} ★`
+                    : stats.starHunter.chossRoute.grade,
                 type: "star-route"
             });
         }
@@ -1207,7 +1222,7 @@ function renderDeck() {
         if (card.favoriteRoutes?.length === 1) {
             innerHTML += `
                 <div class="favorite-route-content anim-element anim-3">
-                    <strong>${card.favoriteRoutes[0].name}</strong>
+                    <strong>${card.favoriteRoutes[0].name} <small>${card.favoriteRoutes[0].grade}</small></strong>
                     <span>${wrapWithNiceSticker(`${card.favoriteRoutes[0].ticks} ticks`, card.favoriteRoutes[0].ticks)}</span>
                 </div>
             `;
@@ -1216,7 +1231,7 @@ function renderDeck() {
         if (card.favoriteRoutes?.length > 1) {
             const favoriteItems = card.favoriteRoutes.map(route => `
                 <div class="card-list-item">
-                    <span>${route.name}</span>
+                    <span>${route.name} <small>${route.grade}</small></span>
                     <span>${wrapWithNiceSticker(`${route.ticks} ticks`, route.ticks)}</span>
                 </div>
             `).join('');
@@ -1246,11 +1261,14 @@ function renderDeck() {
         }
 
         if (card.starRoute) {
+            const starRouteIntro = card.starRouteIntro
+                || `Consensus: ${card.starRoute.avgStars ? card.starRoute.avgStars + ' ★' : ''}`;
+            const starRouteDisplayRating = card.starRouteDisplayRating || card.starRoute.grade;
             innerHTML += `
                 <div class="angry-card-content anim-element anim-3">
-                    <span class="intro-label">Consensus: ${card.starRoute.avgStars ? card.starRoute.avgStars + ' ★' : ''}</span>
+                    <span class="intro-label">${starRouteIntro}</span>
                     <strong>${card.starRoute.name}</strong>
-                    <span class="angry-grade">${card.starRoute.grade}</span>
+                    <span class="angry-grade">${starRouteDisplayRating}</span>
                     <span class="route-crag">${getDeepestCrag(card.starRoute.location)}</span>
                     ${card.starRoute.note ? `<blockquote>"${card.starRoute.note}"</blockquote>` : ''}
                 </div>
@@ -1353,7 +1371,7 @@ function goToSlide(index) {
         });
     }
     if (card && card.type === 'route-stats' && card.routeStats) {
-        animateCounter(`route-pitches-${currentSlideIndex}`, 0, card.routeStats.pitches, 900, card.routeStats.pitches === 1 ? ' "pitch"' : ' pitches');
+        animateCounter(`route-pitches-${currentSlideIndex}`, 0, card.routeStats.pitches, 900, card.routeStats.pitches === 1 ? ' pitch' : ' pitches');
         animateCounter(`route-feet-${currentSlideIndex}`, 0, card.routeStats.feet, 1100, ' feet');
     }
 
