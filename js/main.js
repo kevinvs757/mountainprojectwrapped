@@ -243,8 +243,10 @@ function isEligibleHardestSend(tick) {
         .map(value => value.trim().toLowerCase())
         .filter(Boolean);
     const leadStyle = String(tick['Lead Style'] || '').trim().toLowerCase();
+    const notes = String(tick['Notes'] || '');
     return !styles.some(style => style === 'tr' || style === 'follow')
-        && leadStyle !== 'fell/hung';
+        && leadStyle !== 'fell/hung'
+        && !/\b(?:fall|fell|hung|hang|attempt)\b/i.test(notes);
 }
 
 function getRouteUrl(tick) {
@@ -324,18 +326,24 @@ function getMpDifficultyScore(grade) {
     return -1;
 }
 
-function isNiceValue(val) {
-    if (val === 69 || val === 420 || val === '69' || val === '420') return true;
+function getNiceStickerLabel(val) {
+    if (val === 420 || val === '420') return 'blazeit';
+    if (val === 69 || val === '69') return 'nice';
     if (typeof val === 'string') {
-        const numMatch = val.match(/\b(69|420)\b/);
-        return Boolean(numMatch);
+        if (/\b420\b/.test(val)) return 'blazeit';
+        if (/\b69\b/.test(val)) return 'nice';
     }
-    return false;
+    return null;
+}
+
+function isNiceValue(val) {
+    return getNiceStickerLabel(val) !== null;
 }
 
 function wrapWithNiceSticker(contentHtml, val) {
-    if (!isNiceValue(val)) return contentHtml;
-    return `<span class="nice-sticker-wrapper">${contentHtml}<span class="nice-sticker" aria-hidden="true">nice</span></span>`;
+    const label = getNiceStickerLabel(val);
+    if (!label) return contentHtml;
+    return `<span class="nice-sticker-wrapper">${contentHtml}<span class="nice-sticker" aria-hidden="true">${label}</span></span>`;
 }
 
 function findScenicImage(markdown) {
@@ -386,10 +394,18 @@ async function enrichRouteImages(stats) {
         stats.chossConnoisseurRoute,
         stats.sandbagJudge?.route
     ].filter(route => route?.url);
-    const uniqueRoutes = [...new Map(routes.map(route => [route.url, route])).values()];
+    const routesByUrl = new Map();
+    routes.forEach(route => {
+        const matchingRoutes = routesByUrl.get(route.url) || [];
+        matchingRoutes.push(route);
+        routesByUrl.set(route.url, matchingRoutes);
+    });
 
-    await Promise.all(uniqueRoutes.map(async route => {
-        route.imageUrl = await fetchScenicImage(route);
+    await Promise.all([...routesByUrl.entries()].map(async ([url, matchingRoutes]) => {
+        const imageUrl = await fetchScenicImage(matchingRoutes[0]);
+        matchingRoutes.forEach(route => {
+            route.imageUrl = imageUrl;
+        });
     }));
 }
 
@@ -421,8 +437,12 @@ function processTickList(ticks, targetSeasonYear = currentSeasonYear) {
     const uniqueChodeRoutes = new Set();
     let jiuJitsuBeltLevel = null;
     let northBendSends = 0;
+    const northBendExitCounts = { 32: 0, 34: 0, 38: 0 };
     const travelCountries = new Set();
     const travelStates = new Set();
+    let winterTicks = 0;
+    let summerTicks = 0;
+    const winterMonths = new Set();
     let longestFellHungNote = null;
     let easiestFellHung = null;
     let longestNonFellHungNote = null;
@@ -437,6 +457,13 @@ function processTickList(ticks, targetSeasonYear = currentSeasonYear) {
             climbingDays.add(cleanDate);
             const dateObj = new Date(cleanDate);
             if (!isNaN(dateObj.getTime())) {
+                const month = dateObj.getMonth() + 1;
+                if ([1, 2].includes(month)) {
+                    winterTicks++;
+                    winterMonths.add(month);
+                } else if ([6, 7, 8].includes(month)) {
+                    summerTicks++;
+                }
                 const day = dateObj.getDay();
                 if (day === 0 || day === 6) {
                     weekendTicks++;
@@ -542,13 +569,17 @@ function processTickList(ticks, targetSeasonYear = currentSeasonYear) {
             };
 
             if (!longestRoute || length > longestRoute.feet) longestRoute = routeStats;
-            if (!isBoulderRoute && (!shortestRoute || length < shortestRoute.feet)) shortestRoute = routeStats;
+            if (!isBoulderRoute && !/extention\s*$/i.test(routeName)
+                && (!shortestRoute || length < shortestRoute.feet)) shortestRoute = routeStats;
         }
         if (routeName) {
             if (!routeMap[routeName]) routeMap[routeName] = { ticks: 0, ...getRouteDetails(tick, notes) };
             routeMap[routeName].ticks++;
         }
         if (/North Bend & Vicinity/i.test(location)) {
+            const exitMatch = location.match(/Exit\s+(32|34|38)\b/i);
+            if (exitMatch) northBendExitCounts[exitMatch[1]]++;
+
             const isNorthBendSend = isEligibleHardestSend(tick);
             if (isNorthBendSend) northBendSends++;
 
@@ -599,6 +630,16 @@ function processTickList(ticks, targetSeasonYear = currentSeasonYear) {
         }
     });
 
+    ticks.forEach(tick => {
+        const dateText = String(tick['Date'] || '').trim();
+        const tickYear = getTickYear(dateText);
+        const dateObj = new Date(dateText.split('T')[0].split(' ')[0]);
+        if (tickYear === targetSeasonYear - 1 && !isNaN(dateObj.getTime()) && dateObj.getMonth() === 11) {
+            winterTicks++;
+            winterMonths.add(12);
+        }
+    });
+
     // Top Crags
     const topCrags = Object.entries(cragMap)
         .sort((a, b) => b[1] - a[1])
@@ -616,8 +657,28 @@ function processTickList(ticks, targetSeasonYear = currentSeasonYear) {
         : [];
     const favoriteRoute = favoriteRoutes.length === 1 ? favoriteRoutes[0] : null;
     const travelCriteria = [];
-    if (travelCountries.size > 2) travelCriteria.push('More than 2 countries');
-    if (travelStates.size > 5) travelCriteria.push('More than 5 states');
+    if (travelCountries.size > 2) travelCriteria.push('3+ countries');
+    if (travelStates.size > 5) travelCriteria.push('6+ states');
+    const winterPacePercent = summerTicks > 0
+        ? Math.round((winterTicks / summerTicks) * 100)
+        : 0;
+    const winterPaceRatio = summerTicks > 0 ? winterTicks / summerTicks : 0;
+    const climbedEveryWinterMonth = winterMonths.size === 3;
+    const qualifiesForNoOffseason = winterPaceRatio >= 0.15 || climbedEveryWinterMonth;
+    const noOffseasonCriteria = [];
+    if (summerTicks > 0 && winterPaceRatio >= 0.15) {
+        noOffseasonCriteria.push('Winter pace 15%+ of summer');
+    }
+    if (climbedEveryWinterMonth) noOffseasonCriteria.push('Got out each winter month');
+    if (winterTicks > 25) noOffseasonCriteria.push(`${winterTicks} ticks`);
+    if (noOffseasonCriteria.length) noOffseasonCriteria.push('Not a Skier');
+    const noOffseason = qualifiesForNoOffseason
+        ? {
+            winterPacePercent,
+            criteria: noOffseasonCriteria,
+            detail: `Last winter you kept climbing at ${winterPacePercent}% of your summer pace.`
+        }
+        : null;
 
     // Star Averages & Route Quality
     const ratedRoutes = [...ratedRouteMap.values()];
@@ -659,6 +720,12 @@ function processTickList(ticks, targetSeasonYear = currentSeasonYear) {
     const sandbagJudge = biggestDowngrade
         ? { type: 'downgrade', ...biggestDowngrade }
         : (biggestUpgrade ? { type: 'upgrade', ...biggestUpgrade } : null);
+
+    const topNorthBendExit = Object.entries(northBendExitCounts)
+        .sort(([, countA], [, countB]) => countB - countA)[0];
+    const northBendExitSupremecist = topNorthBendExit?.[1]
+        ? { exit: topNorthBendExit[0], count: topNorthBendExit[1] }
+        : null;
 
     // Personas
     const totalStyles = typeCounts.Sport + typeCounts.Trad + typeCounts.TopRope + typeCounts.Boulder || 1;
@@ -704,12 +771,19 @@ function processTickList(ticks, targetSeasonYear = currentSeasonYear) {
         travelCountries: [...travelCountries].sort(),
         travelStates: [...travelStates].sort(),
         travelCriteria,
+        noOffseason,
         longestRoute,
         shortestRoute,
         starChaserRoute: starHunter?.isHighQuality ? starHunter.highQualityRoute : null,
         chossConnoisseurRoute: starHunter?.isChossLover ? starHunter.chossRoute : null,
         northBender: northBendSends >= 20 || (chodesRidden > 0 && jiuJitsuBeltLevel !== null)
-            ? { northBendSends, chodesRidden, uniqueChodeRoutes: uniqueChodeRoutes.size, jiuJitsuBeltLevel }
+            ? {
+                northBendSends,
+                chodesRidden,
+                uniqueChodeRoutes: uniqueChodeRoutes.size,
+                jiuJitsuBeltLevel,
+                northBendExitSupremecist
+            }
             : null,
         angryMuch: longestFellHungNote && longestFellHungNote.note.length > 70
             ? longestFellHungNote
@@ -804,6 +878,18 @@ function buildCardsFromStats(stats) {
         });
     }
 
+    if (stats.noOffseason) {
+        cards.push({
+            id: "noOffseason",
+            theme: "bg-no-offseason",
+            subtitle: "Winter is for sending temps",
+            title: "No Offseason",
+            noOffseasonDetail: stats.noOffseason.detail,
+            noOffseasonCriteria: stats.noOffseason.criteria,
+            type: "no-offseason"
+        });
+    }
+
     if (stats.favoriteRoutes.length) {
         cards.push({
             id: "favoriteRoute",
@@ -871,6 +957,13 @@ function buildCardsFromStats(stats) {
     if (stats.northBender) {
         const northBendBonusStats = [
             { label: "North Bend Sends", value: stats.northBender.northBendSends },
+            stats.northBender.northBendExitSupremecist
+                ? {
+                    label: 'Most-ticked exit',
+                    value: `#${stats.northBender.northBendExitSupremecist.exit} (${stats.northBender.northBendExitSupremecist.count})`,
+                    sticker: `Exit ${stats.northBender.northBendExitSupremecist.exit} Supremecist`
+                }
+                : null,
             stats.northBender.chodesRidden > 0
                 ? { label: "Chodes Ridden", value: stats.northBender.chodesRidden }
                 : null,
@@ -1060,6 +1153,10 @@ fetchUserBtn.addEventListener('click', () => {
     fetchUserTicks(input);
 });
 
+usernameInput.addEventListener('keydown', event => {
+    if (event.key === 'Enter') fetchUserBtn.click();
+});
+
 demoBtn.addEventListener('click', () => {
     const csvText = sampleData;
     const rows = parseCSV(csvText);
@@ -1073,7 +1170,7 @@ function applyRouteImages() {
         const slide = document.getElementById(`slide-${index}`);
         const route = card.favoriteRoutes?.length === 1 ? card.favoriteRoutes[0]
             : card.routeStats || card.angryMuch
-            || card.gumbyMoment || card.saveForBlog;
+            || card.gumbyMoment || card.saveForBlog || card.sandbagJudge?.route;
         if (!slide || !route?.imageUrl) return;
 
         slide.classList.add('route-image-card');
@@ -1187,6 +1284,18 @@ function renderDeck() {
             `;
         }
 
+        if (card.type === 'no-offseason') {
+            const criteriaItems = card.noOffseasonCriteria.map(criteria => `
+                <div class="traveller-criteria-item">${criteria}</div>
+            `).join('');
+            innerHTML += `
+                <div class="traveller-content anim-element anim-3">
+                    <div class="traveller-criteria">${criteriaItems}</div>
+                    <p class="no-offseason-detail">${card.noOffseasonDetail}<br><span class="subtitle">Skis remain unnecessary.</span></p>
+                </div>
+            `;
+        }
+
         if (card.hardestSends) {
             const hardestItems = card.hardestSends.map(send => `
                 <div class="hardest-list-item">
@@ -1201,6 +1310,7 @@ function renderDeck() {
         if (card.bonusStats) {
             const bonusItems = card.bonusStats.map(stat => `
                 <div class="hardest-list-item">
+                    ${stat.sticker ? `<span class="world-wall-sticker exit-supremecist-sticker">${stat.sticker}</span>` : ''}
                     <span>${stat.label}</span>
                     <strong>${wrapWithNiceSticker(stat.value, stat.value)}</strong>
                 </div>
@@ -1341,6 +1451,7 @@ function resetToLanding() {
     playbackAnimation?.cancel();
     playbackOverlay.hidden = true;
     isPaused = false;
+    document.body.classList.remove('is-paused');
     progressElapsed = 0;
     pauseButton.hidden = true;
     landingScreen.classList.add('active');
@@ -1431,6 +1542,7 @@ function pausePlayback() {
     progressElapsed += Date.now() - startTime;
     clearInterval(progressInterval);
     isPaused = true;
+    document.body.classList.add('is-paused');
     pauseButton.hidden = true;
     showPlaybackOverlay('pause', true);
 }
@@ -1439,6 +1551,7 @@ function resumePlayback() {
     if (!isPaused) return;
 
     isPaused = false;
+    document.body.classList.remove('is-paused');
     pauseButton.hidden = false;
     showPlaybackOverlay('play', false);
     startProgress();
@@ -1494,7 +1607,7 @@ function animateCounter(id, start, end, duration, suffix = '') {
                 const sticker = document.createElement('span');
                 sticker.className = 'nice-sticker';
                 sticker.setAttribute('aria-hidden', 'true');
-                sticker.textContent = 'nice';
+                sticker.textContent = getNiceStickerLabel(end);
                 parentContainer.appendChild(sticker);
             }
         }

@@ -563,6 +563,10 @@ function boot() {
         fetchUserTicks(value);
     });
 
+    document.getElementById('usernameInput').addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') document.getElementById('fetchUserBtn').click();
+    });
+
     document.getElementById('csvInput').addEventListener('change', (event) => {
         const [file] = event.target.files || [];
         if (file) {
