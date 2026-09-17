@@ -107,6 +107,22 @@ function getSeasonYear(date = new Date()) {
 }
 
 const currentSeasonYear = getSeasonYear();
+
+function getRequestedSeasonYear() {
+    const requested = new URLSearchParams(window.location.search).get('year');
+    if (requested === 'currentYear') return currentSeasonYear;
+    if (!/^\d{4}$/.test(requested || '')) return null;
+    const year = Number(requested);
+    return year >= 2000 && year <= currentSeasonYear + 1 ? year : null;
+}
+
+const requestedSeasonYear = getRequestedSeasonYear();
+if (requestedSeasonYear === null) {
+    window.location.replace('?year=currentYear');
+}
+
+const activeSeasonYear = requestedSeasonYear || currentSeasonYear;
+
 let playbackOverlayTimeout = null;
 let playbackOverlayCycle = 0;
 let playbackAnimation = null;
@@ -122,7 +138,7 @@ if (window.emailjs && !emailConfig.publicKey.startsWith('YOUR_')) {
     emailjs.init({ publicKey: emailConfig.publicKey });
 }
 
-document.getElementById('seasonLabel').textContent = `${currentSeasonYear} Edition`;
+document.getElementById('seasonLabel').textContent = `${activeSeasonYear} Edition`;
 
 // --- Standard CSV Parser ---
 function parseCSV(text) {
@@ -1010,7 +1026,7 @@ async function fetchUserTicks(inputUrl) {
         }
 
         persistWrappedHeatmapState(csvText, profileUrl);
-        const stats = processTickList(rows);
+        const stats = processTickList(rows, activeSeasonYear);
         startWrapped(stats, { csvText, profileUrl });
         trackFeatureAccess(profileUrl, 'wrapped', 'landing');
     } catch (err) {
@@ -1031,7 +1047,7 @@ csvInput.addEventListener('change', (e) => {
     reader.onload = (event) => {
         const csvText = event.target.result;
         const rows = parseCSV(csvText);
-        const stats = processTickList(rows);
+        const stats = processTickList(rows, activeSeasonYear);
         persistWrappedHeatmapState(csvText, '');
         startWrapped(stats, { csvText, profileUrl: '' });
     };
@@ -1047,7 +1063,7 @@ fetchUserBtn.addEventListener('click', () => {
 demoBtn.addEventListener('click', () => {
     const csvText = sampleData;
     const rows = parseCSV(csvText);
-    const stats = processTickList(rows);
+    const stats = processTickList(rows, activeSeasonYear);
     persistWrappedHeatmapState(csvText, '');
     startWrapped(stats, { csvText, profileUrl: '' });
 });
