@@ -20,6 +20,18 @@ function getDeepestCrag(location) {
         .replace(/\bWest\b/gi, 'W.');
 }
 
+function isEligibleSend(tick) {
+    const styles = String(tick.Style || tick['Style'] || '')
+        .split(',')
+        .map(value => value.trim().toLowerCase())
+        .filter(Boolean);
+    const leadStyle = String(tick['Lead Style'] || tick.LeadStyle || '').trim().toLowerCase();
+    const notes = String(tick.Notes || tick['Notes'] || '');
+    return !styles.includes('follow')
+        && leadStyle !== 'fell/hung'
+        && !/\b(?:fall|fell|take|hang|hung|attempt)\b/i.test(notes);
+}
+
 function canonicalizeProfileUrl(userInput) {
     let input = String(userInput || '').trim();
     if (!input) return null;

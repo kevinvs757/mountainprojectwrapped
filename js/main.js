@@ -237,18 +237,6 @@ function getTravelRegions(location) {
     return { country, state };
 }
 
-function isEligibleHardestSend(tick) {
-    const styles = String(tick['Style'] || '')
-        .split(',')
-        .map(value => value.trim().toLowerCase())
-        .filter(Boolean);
-    const leadStyle = String(tick['Lead Style'] || '').trim().toLowerCase();
-    const notes = String(tick['Notes'] || '');
-    return !styles.some(style => style === 'tr' || style === 'follow')
-        && leadStyle !== 'fell/hung'
-        && !/\b(?:fall|fell|hung|hang|attempt)\b/i.test(notes);
-}
-
 function getRouteUrl(tick) {
     const routeUrl = String(tick['URL'] || '').trim();
     return routeUrl.startsWith('http') ? routeUrl : null;
@@ -418,6 +406,7 @@ function processTickList(ticks, targetSeasonYear = currentSeasonYear) {
     const maxSends = {
         Sport: { code: -1, grade: "N/A", name: "N/A", location: "N/A" },
         Trad: { code: -1, grade: "N/A", name: "N/A", location: "N/A" },
+        TopRope: { code: -1, grade: "N/A", name: "N/A", location: "N/A" },
         Boulder: { code: -1, grade: "N/A", name: "N/A", location: "N/A" }
     };
 
@@ -522,7 +511,7 @@ function processTickList(ticks, targetSeasonYear = currentSeasonYear) {
         }
 
         // Personal grade difference tracking using Mountain Project difficulty rating codes
-        if (yourRating && consensusRating && isEligibleHardestSend(tick)) {
+        if (yourRating && consensusRating && isEligibleSend(tick)) {
             const consensusScore = getMpDifficultyScore(consensusRating) > 0
                 ? getMpDifficultyScore(consensusRating)
                 : (Number.isFinite(ratingCode) && ratingCode > 0 ? ratingCode : -1);
@@ -580,7 +569,7 @@ function processTickList(ticks, targetSeasonYear = currentSeasonYear) {
             const exitMatch = location.match(/Exit\s+(32|34|38)\b/i);
             if (exitMatch) northBendExitCounts[exitMatch[1]]++;
 
-            const isNorthBendSend = isEligibleHardestSend(tick);
+            const isNorthBendSend = isEligibleSend(tick);
             if (isNorthBendSend) northBendSends++;
 
             if (isNorthBendSend && /chode/i.test(routeName)) {
@@ -614,7 +603,7 @@ function processTickList(ticks, targetSeasonYear = currentSeasonYear) {
         }
 
         // Hardest Send per category using Rating Code
-        if (category && maxSends[category] && isEligibleHardestSend(tick) && ratingCode > maxSends[category].code) {
+        if (category && maxSends[category] && isEligibleSend(tick) && ratingCode > maxSends[category].code) {
             maxSends[category] = {
                 code: ratingCode,
                 grade: tick['Rating'] || 'Unknown',
@@ -763,6 +752,7 @@ function processTickList(ticks, targetSeasonYear = currentSeasonYear) {
         hardestSends: {
             Sport: maxSends.Sport.code !== -1 ? maxSends.Sport : null,
             Trad: maxSends.Trad.code !== -1 ? maxSends.Trad : null,
+            TopRope: maxSends.TopRope.code !== -1 ? maxSends.TopRope : null,
             Boulder: maxSends.Boulder.code !== -1 ? maxSends.Boulder : null
         },
         topCrags,
@@ -975,7 +965,7 @@ function buildCardsFromStats(stats) {
         cards.push({
             id: "northBender",
             theme: "bg-north-bender",
-            subtitle: stats.northBender.uniqueChodeRoutes >= 4
+            subtitle: stats.northBender.uniqueChodeRoutes >= 5
                 ? 'You really like north bend and chodes. Do you have any <span class="email-hit-area"><button class="email-link" id="oldRopeEmail" type="button">old ropes</button></span> to part with?'
                 : 'You really like north bend. Do you have any <span class="email-hit-area"><button class="email-link" id="oldRopeEmail" type="button">old ropes</button></span> to part with?',
             title: "Local Crusher",

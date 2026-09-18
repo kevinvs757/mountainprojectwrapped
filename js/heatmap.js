@@ -79,13 +79,7 @@ function isTradRow(row) {
 }
 
 function isSendRow(row) {
-    const styles = String(row.Style || row['Style'] || '')
-        .split(',')
-        .map((value) => value.trim().toLowerCase())
-        .filter(Boolean);
-    const leadStyle = String(row['Lead Style'] || row.LeadStyle || '').trim().toLowerCase();
-    return !styles.some((style) => style === 'follow' || style === 'attempt')
-        && leadStyle !== 'fell/hung';
+    return isEligibleSend(row);
 }
 
 function filterRowsForTickScope(rows, scope) {
