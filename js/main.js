@@ -959,8 +959,8 @@ function buildCardsFromStats(stats) {
             { label: "North Bend Sends", value: stats.northBender.northBendSends },
             stats.northBender.northBendExitSupremecist
                 ? {
-                    label: 'Most-ticked exit',
-                    value: `#${stats.northBender.northBendExitSupremecist.exit} (${stats.northBender.northBendExitSupremecist.count})`,
+                    label: `Exit ${stats.northBender.northBendExitSupremecist.exit} ticks`,
+                    value: stats.northBender.northBendExitSupremecist.count,
                     sticker: `Exit ${stats.northBender.northBendExitSupremecist.exit} Supremecist`
                 }
                 : null,
