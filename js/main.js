@@ -632,14 +632,13 @@ function processTickList(ticks, targetSeasonYear = currentSeasonYear) {
         .sort((a, b) => b[1].ticks - a[1].ticks);
     const favoriteRouteTicks = favoriteRouteEntry[0]?.[1].ticks || 0;
     const tiedFavoriteEntries = favoriteRouteEntry.filter(([, route]) => route.ticks === favoriteRouteTicks);
-    const favoriteRoutes = favoriteRouteTicks > 1
-        ? (tiedFavoriteEntries.length > 5
-            ? [...tiedFavoriteEntries].sort((a, b) => b[1].difficulty - a[1].difficulty)
-            : tiedFavoriteEntries)
-            .slice(0, 5)
-            .map(([name, route]) => ({ ...route, name }))
+    const favoriteRoutes = favoriteRouteTicks > 1 && tiedFavoriteEntries.length < 5
+        ? tiedFavoriteEntries.map(([name, route]) => ({ ...route, name }))
         : [];
     const favoriteRoute = favoriteRoutes.length === 1 ? favoriteRoutes[0] : null;
+    const refusalToProject = tiedFavoriteEntries.length >= 5
+        ? { maxTicks: favoriteRouteTicks, tiedCount: tiedFavoriteEntries.length }
+        : null;
     const travelCriteria = [];
     if (travelCountries.size > 2) travelCriteria.push('3+ countries');
     if (travelStates.size > 5) travelCriteria.push('6+ states');
@@ -753,6 +752,7 @@ function processTickList(ticks, targetSeasonYear = currentSeasonYear) {
         topCrags,
         favoriteRoute,
         favoriteRoutes,
+        refusalToProject,
         travelCountries: [...travelCountries].sort(),
         travelStates: [...travelStates].sort(),
         travelCriteria,
@@ -888,6 +888,18 @@ function buildCardsFromStats(stats) {
             favoriteRoutes: stats.favoriteRoutes,
             favoriteRoute: stats.favoriteRoute,
             type: "favorite-route"
+        });
+    }
+
+    if (stats.refusalToProject) {
+        const refusal = stats.refusalToProject;
+        cards.push({
+            id: "refusalToProject",
+            theme: "bg-electric",
+            subtitle: "What's projecting?",
+            title: "Commitment Issues",
+            refusalToProject: refusal,
+            type: "refusal-to-project"
         });
     }
 
@@ -1332,6 +1344,18 @@ function renderDeck() {
                     <span class="angry-grade">${card.gumbyMoment.grade}</span>
                     <span class="route-crag">${getAreaAndCrag(card.gumbyMoment.location)}</span>
                     ${noteMarkup}
+                </div>
+            `;
+        }
+
+        if (card.refusalToProject) {
+            const r = card.refusalToProject;
+            const timesText = r.maxTicks === 1 ? 'once' : r.maxTicks === 2 ? 'twice' : `${r.maxTicks} times`;
+            innerHTML += `
+                <div class="commitment-content anim-element anim-3">
+                    <p class="commitment-stat">You didn't tick any route more than <strong>${timesText}</strong>.</p>
+                    <p class="commitment-stat">And you did that on <strong>${r.tiedCount} different routes</strong>.</p>
+                    <p class="commitment-desc">We would've shown you what routes you climbed the most, but the concept of climbing a route more than ${timesText} seems foreign to you.</p>
                 </div>
             `;
         }
