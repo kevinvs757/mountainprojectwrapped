@@ -1,56 +1,4 @@
-// --- Raw Sample Data ---
-const sampleData = `Date\tRoute\tRating\tNotes\tURL\tPitches\tLocation\tAvg Stars\tYour Stars\tStyle\tLead Style\tRoute Type\tYour Rating\tLength\tRating Code
-9/8/2026\tCorrugation Corner\t5.7\tW Annie! Spooky but secure\thttps://www.mountainproject.com/route/105872293/corrugation-corner\t3\tCalifornia > Lake Tahoe > Highway 50 Corridor > Lover's Leap > Main Formation > Main Wall > Main Wall\t3.9\t-1\tLead\tOnsight\tTrad\t\t360\t1800
-8/29/2026\tThere and Back and There and Back and There and Back Again\t5.11a\t\thttps://www.mountainproject.com/route/124998566/there-and-back-and-there-and-back-and-there-and-back-again\t1\tWashington > Central-West Cascades & Seattle > North Bend & Vicinity > Exit 34; Middle Fork & Taylor River > Bessemer Mountain > North Bessemer Creek > Helm's Deep\t2.4\t-1\tLead\tOnsight\tSport\t\t50\t4600
-8/25/2026\tSunset Strip\t5.10+\tSwapped leads w Rob. Led 1, 3, 6+7, 9, 11. Fell on the sport 10d slab. Linking 6 and 7 was a mistake.\thttps://www.mountainproject.com/route/108398190/sunset-strip\t12\tInternational > North America > Canada > British Columbia > Squamish > Stawamus Chief > The Dihedrals\t3.7\t-1\tLead\tFell/Hung\tTrad\t\t930\t3300
-8/18/2026\tEllie's Sweet Kiss\t5.9+\t\thttps://www.mountainproject.com/route/106523720/ellies-sweet-kiss\t1\tWashington > Central-West Cascades & Seattle > North Bend & Vicinity > Exit 38 > Far Side > Interstate Park > (c) Eastern Block\t2.8\t-1\tLead\t\tSport\t\t75\t2500
-8/18/2026\tInsomniac\t5.8\t\thttps://www.mountainproject.com/route/107783765/insomniac\t1\tWashington > Central-West Cascades & Seattle > North Bend & Vicinity > Exit 38 > Far Side > Interstate Park > (a) Headlight Point\t3\t-1\tFollow\t\tSport\t\t90\t2100
-8/18/2026\tEating Rocks\t5.6\t\thttps://www.mountainproject.com/route/107783754/eating-rocks\t1\tWashington > Central-West Cascades & Seattle > North Bend & Vicinity > Exit 38 > Far Side > Interstate Park > (a) Headlight Point\t1\t-1\tFollow\t\tSport\t\t35\t1600
-8/18/2026\tNocturnal Remission\t5.7\tW Evan\thttps://www.mountainproject.com/route/108172312/nocturnal-remission\t1\tWashington > Central-West Cascades & Seattle > North Bend & Vicinity > Exit 38 > Far Side > Interstate Park > (a) Headlight Point\t2.3\t-1\t\t\tSport\t\t50\t1800
-8/18/2026\tAfter Hours\t5.10a\t\thttps://www.mountainproject.com/route/202743265/after-hours\t1\tWashington > Central-West Cascades & Seattle > North Bend & Vicinity > Exit 34; Middle Fork & Taylor River > Middle Fork Campground Crag\t3.3\t4\tLead\t\tSport\t5.10a\t65\t2600
-8/17/2026\tDelicate Heave\t5.10+\t\thttps://www.mountainproject.com/route/202743078/delicate-heave\t1\tWashington > Central-West Cascades & Seattle > North Bend & Vicinity > Exit 34; Middle Fork & Taylor River > Middle Fork Campground Crag\t2.6\t3\tLead\t\tSport\t5.10c\t45\t3300
-8/17/2026\tHarmonious Springs\t5.8\t\thttps://www.mountainproject.com/route/201389675/harmonious-springs\t1\tWashington > Central-West Cascades & Seattle > North Bend & Vicinity > Exit 34; Middle Fork & Taylor River > Middle Fork Campground Crag\t2.1\t-1\tLead\t\tSport\t\t40\t2100
-8/17/2026\tFive Hundred\t5.7\t\thttps://www.mountainproject.com/route/201385829/five-hundred\t1\tWashington > Central-West Cascades & Seattle > North Bend & Vicinity > Exit 34; Middle Fork & Taylor River > Middle Fork Campground Crag\t2.9\t-1\tLead\t\tSport\t\t40\t1800
-8/10/2026\tOrthogonal Projection\t5.11b\tAldous is right, 11b\thttps://www.mountainproject.com/route/126257388/orthogonal-projection\t1\tWashington > Central-West Cascades & Seattle > North Bend & Vicinity > Exit 38 > Mt Washington > Crag of the 20s > (a) Upper Wall > (b) Quadratic Cave\t3\t3\tLead\t\tSport\t5.11b\t80\t4900
-8/10/2026\tOrthogonal Projection\t5.11b\t\thttps://www.mountainproject.com/route/126257388/orthogonal-projection\t1\tWashington > Central-West Cascades & Seattle > North Bend & Vicinity > Exit 38 > Mt Washington > Crag of the 20s > (a) Upper Wall > (b) Quadratic Cave\t3\t3\tLead\tFell/Hung\tSport\t5.11b\t80\t4900
-7/30/2026\tSpontaneous Deforestation\t5.8\tW rob. Great stuff. I thought the layback before the bulge was the crux. A 70m is fine if you don't mind some tomfoolery.\thttps://www.mountainproject.com/route/201719230/spontaneous-deforestation\t1\tWashington > Central-West Cascades & Seattle > North Bend & Vicinity > Exit 34; Middle Fork & Taylor River > Stegosaurus Butte > Fee Demo Wall\t3.9\t-1\tLead\tOnsight\tTrad\t\t130\t2100
-7/24/2026\tOrphan\t5.9\t\thttps://www.mountainproject.com/route/106236039/orphan\t1\tInternational > North America > Canada > British Columbia > Squamish > Murrin Park > Block and Tackle\t2.7\t-1\tLead\tOnsight\tTrad\t\t50\t2400
-7/13/2026\tDark Arts\t5.10d\tThe dark arts are finding rests\thttps://www.mountainproject.com/route/116584584/dark-arts\t1\tOregon > Portland & The Gorge > Broughton Bluff > Bat Wall\t3.7\t-1\tLead\tFlash\tSport\t\t80\t3500
-7/12/2026\tSuperstition\t5.10c\t\thttps://www.mountainproject.com/route/107526980/superstition\t1\tOregon > Portland & The Gorge > Broughton Bluff > Bat Wall\t3.3\t-1\tLead\tFlash\tSport\t\t70\t3200
-7/12/2026\tRed Eye [E]\t5.1\tLinked from classic crack, also very fun! Perhaps reachy to get over the shelf up top\thttps://www.mountainproject.com/route/106206829/red-eye-e\t1\tOregon > Portland & The Gorge > Broughton Bluff > Red Wall\t3\t-1\tLead\tOnsight\tSport\t\t60\t3000
-7/12/2026\tClassic Crack\t5.9+\tSlippery but very fun! Linked into red eye\thttps://www.mountainproject.com/route/105789513/classic-crack\t1\tOregon > Portland & The Gorge > Broughton Bluff > Red Wall\t2.7\t-1\tLead\tOnsight\tTrad\t\t35\t2500
-7/5/2026\tRiptide\t5.9+\tW dyl, doubles in .75 and 1, best to link. Great stuff\thttps://www.mountainproject.com/route/107651987/riptide\t2\tNew Hampshire > Lakes Region > New Durham Area (Longstack, Devil's Den, Rines Hill, etc.) > Longstack Precipice > 3. The Big Wall\t3.1\t-1\tLead\t\tTrad\t\t170\t2500
-6/29/2026\tCultureshock\t5.12a\tGot through 5 bolts, shut down at upper crux. Been doing R dropknee, bumping L hand to the sidepull, then no idea where to reach w R hand.\thttps://www.mountainproject.com/route/105793317/cultureshock\t1\tWashington > Central-West Cascades & Seattle > North Bend & Vicinity > Exit 38 > Deception Crags > Nevermind Wall\t3.4\t-1\tLead\tFell/Hung\tSport\t\t55\t6600
-6/29/2026\tCultureshock\t5.12a\tBolt by bolt pretty much\thttps://www.mountainproject.com/route/105793317/cultureshock\t1\tWashington > Central-West Cascades & Seattle > North Bend & Vicinity > Exit 38 > Deception Crags > Nevermind Wall\t3.4\t-1\tLead\tFell/Hung\tSport\t\t55\t6600
-6/29/2026\tLove Bucket\t5.10c\t\thttps://www.mountainproject.com/route/106887421/love-bucket\t1\tWashington > Central-West Cascades & Seattle > North Bend & Vicinity > Exit 38 > Deception Crags > Nevermind Wall\t2.4\t-1\tLead\tFell/Hung\tSport\t\t50\t3200
-6/26/2026\tGhosts Of War\t5.8\t\thttps://www.mountainproject.com/route/109389437/ghosts-of-war\t1\tWashington > Central-West Cascades & Seattle > North Bend & Vicinity > Exit 38 > Far Side > Interstate Park > (c) Eastern Block\t1.5\t-1\tLead\t\tSport\t\t50\t2100
-6/26/2026\tHurricane\t5.10c\t\thttps://www.mountainproject.com/route/107787753/hurricane\t1\tWashington > Central-West Cascades & Seattle > North Bend & Vicinity > Exit 38 > Far Side > Interstate Park > (c) Eastern Block\t2.8\t-1\tLead\tOnsight\tSport\t\t40\t3200
-6/26/2026\tEllie's Sweet Kiss\t5.9+\t\thttps://www.mountainproject.com/route/106523720/ellies-sweet-kiss\t1\tWashington > Central-West Cascades & Seattle > North Bend & Vicinity > Exit 38 > Far Side > Interstate Park > (c) Eastern Block\t2.8\t-1\tLead\tFlash\tSport\t\t75\t2500
-6/16/2026\tForest Bathing (Shinrin-Yoku)\t5.8+\tDid a coward's Fred Becky style: in boots on top rope\thttps://www.mountainproject.com/route/124829933/forest-bathing-shinrin-yoku\t1\tWashington > Central-West Cascades & Seattle > North Bend & Vicinity > Exit 34; Middle Fork & Taylor River > Stegosaurus Butte > The Rump > The Goods\t2.5\t3\tTR\t\tTrad\t\t80\t2200
-6/13/2026\tDetox\t5.11a\t\thttps://www.mountainproject.com/route/202812920/detox\t1\tWashington > Central-West Cascades & Seattle > North Bend & Vicinity > Exit 38 > Mt Washington > Salal Point Crags > Serenity Point\t2.8\t-1\tLead\tOnsight\tSport, TR\t5.10+\t75\t4600
-6/13/2026\tContact High\t5.11a\t\thttps://www.mountainproject.com/route/202813272/contact-high\t1\tWashington > Central-West Cascades & Seattle > North Bend & Vicinity > Exit 38 > Mt Washington > Salal Point Crags > Serenity Point\t3.1\t-1\tLead\tOnsight\tSport, TR\t5.10+\t75\t4600
-6/13/2026\tTouch the Sky\t5.10b\t\thttps://www.mountainproject.com/route/202813448/touch-the-sky\t1\tWashington > Central-West Cascades & Seattle > North Bend & Vicinity > Exit 38 > Mt Washington > Salal Point Crags > Serenity Point\t3.6\t-1\tLead\tOnsight\tSport\t5.10a\t75\t2900
-6/12/2026\tDivergence\t5.12a\tSuper fun getting to the crux. Crux seems crazy!\thttps://www.mountainproject.com/route/203015196/divergence\t1\tWashington > Central-West Cascades & Seattle > North Bend & Vicinity > Exit 38 > Mt Washington > Salal Point Crags > Serenity Point\t3.4\t-1\tLead\tFell/Hung\tSport, TR\t\t85\t6600
-6/11/2026\tRiffraff\t5.10d\tWas a little wet. Jugs off the crack help. Add it to the little si crack circuit\thttps://www.mountainproject.com/route/202504105/riffraff\t1\tWashington > Central-West Cascades & Seattle > North Bend & Vicinity > Exit 32; Little Si > World Wall Group > Burdo World\t2\t-1\tTR\t\tTrad\t\t40\t3500
-6/6/2026\tEat a Peach\t5.7\tNice to have a 4 at the top.\thttps://www.mountainproject.com/route/108692982/eat-a-peach\t1\tWashington > South-Central & Yakima > Tieton River > The Bend > Bend North\t2.6\t-1\tLead\tOnsight\tTrad\t\t60\t1800
-6/6/2026\tEd's Jam\t5.8\tDidn't love the alpine feel of the approach pitch. I guess I don't know what 4th class is\thttps://www.mountainproject.com/route/106539493/eds-jam\t2\tWashington > South-Central & Yakima > Tieton River > The Bend > Bend Center\t3.4\t-1\tLead\tOnsight\tTrad\t\t\t2100
-6/4/2026\tThe Nameless Tower\t5.10d\t\thttps://www.mountainproject.com/route/107759719/the-nameless-tower\t1\tWashington > Central-West Cascades & Seattle > North Bend & Vicinity > Exit 32; Little Si > The Woods Group > (a) Midland\t3.1\t-1\tLead\t\tSport\t\t80\t3500
-6/4/2026\tSituation Room\t5.11a\t\thttps://www.mountainproject.com/route/109005966/situation-room\t1\tWashington > Central-West Cascades & Seattle > North Bend & Vicinity > Exit 32; Little Si > British Aisles > (d) AWOL\t2.8\t-1\tLead\t\tSport\t\t80\t4600
-6/4/2026\tShih Tzu Jiu-Jitsu 11: Puppy Madness\t5.12a\tNailed lower cruxes only to pump out on crimps below anchor.\thttps://www.mountainproject.com/route/124228629/shih-tzu-jiu-jitsu-11-puppy-madness\t1\tWashington > Central-West Cascades & Seattle > North Bend & Vicinity > Exit 32; Little Si > The Woods Group > (b) The Woods\t3\t-1\tLead\tFell/Hung\tSport\t\t100\t6600
-6/4/2026\tSweet and Sticky\t5.9\tWait I never knew this went to the second set of anchors! One of n bends best 5.9s.\thttps://www.mountainproject.com/route/105827410/sweet-and-sticky\t1\tWashington > Central-West Cascades & Seattle > North Bend & Vicinity > Exit 32; Little Si > The Woods Group > (a) Midland\t2.7\t3\tLead\t\tSport\t5.8\t80\t2400
-5/23/2026\tHacky Sack\t5.10a/b\tBok bok bok bok bok\thttps://www.mountainproject.com/route/202648418/hacky-sack\t1\tWashington > Central-West Cascades & Seattle > North Bend & Vicinity > Exit 32; Little Si > Canopy Crag Group > (d) Love Shack\t2.1\t-1\tLead\t\tSport\t\t50\t2800
-5/20/2026\tA Berry Good Time\t5.10a\tOne move crux after second bolt. Crack has moss regrowing in it, needs a re-cleaning. Passive gear would've been nice due to this. Save a 1 or 2 for the top.\thttps://www.mountainproject.com/route/123229783/a-berry-good-time\t1\tWashington > Central-West Cascades & Seattle > North Bend & Vicinity > Exit 34; Middle Fork & Taylor River > Stegosaurus Butte > The Rump > Room With A View\t3\t-1\tLead\t\tTrad\t\t60\t2600
-5/20/2026\tDeep Roots\t5.9+\t\thttps://www.mountainproject.com/route/122908046/deep-roots\t1\tWashington > Central-West Cascades & Seattle > North Bend & Vicinity > Exit 34; Middle Fork & Taylor River > Stegosaurus Butte > The Rump > The Goods\t3.9\t-1\tLead\t\tTrad\t\t100\t2500
-5/20/2026\tLittle Lost Handjammer\t5.9\t\thttps://www.mountainproject.com/route/124348171/little-lost-handjammer\t1\tWashington > Central-West Cascades & Seattle > North Bend & Vicinity > Exit 34; Middle Fork & Taylor River > Stegosaurus Butte > The Rump > The Butte-tresses\t2.9\t-1\tLead\tOnsight\tTrad\t\t35\t2400
-5/16/2026\tRight of Nothing But the Jam\t5.10+\tBring 3 .75s to stitch up the 15 ft crux.\thttps://www.mountainproject.com/route/119555040/right-of-nothing-but-the-jam\t1\tWashington > Central Region > Ancient Lakes & Judith Pond > Judith Pond > West Wall\t3.3\t-1\tLead\tFell/Hung\tTrad\t5.10+\t50\t3300
-5/16/2026\tNothing But the Jam\t5.11b/c\tFell/hung a few times. Tough! I did all the moves.\thttps://www.mountainproject.com/route/120493738/nothing-but-the-jam\t1\tWashington > Central Region > Ancient Lakes & Judith Pond > Judith Pond > West Wall\t3.5\t-1\tTR\t\tTrad\t\t60\t5100
-4/27/2026\tFinished Business\t5.10b/c\tLowered in for the crux pitch after doing BBP, that counts as a full tick right?\thttps://www.mountainproject.com/route/124969670/finished-business\t3\tWashington > Central-West Cascades & Seattle > North Bend & Vicinity > Exit 34; Middle Fork & Taylor River > Stegosaurus Butte > The Rump > The Bad and the Ugly\t3.6\t-1\tLead\tFlash\tTrad\t\t260\t3100
-4/27/2026\tBusiness Before Pleasure\t5.8\tLed 1 & 3 w Andrew, cheeky after work spring multi.\thttps://www.mountainproject.com/route/124969741/business-before-pleasure\t3\tWashington > Central-West Cascades & Seattle > North Bend & Vicinity > Exit 34; Middle Fork & Taylor River > Stegosaurus Butte > The Rump > The Bad and the Ugly\t3.2\t-1\tLead\t\tTrad\t\t270\t2100
-4/26/2026\t[L] Deep Breakfast\t5.12b\tGot a few clips up off the ledge\thttps://www.mountainproject.com/route/125000319/l-deep-breakfast\t1\tWashington > Central-West Cascades & Seattle > North Bend & Vicinity > Exit 34; Middle Fork & Taylor River > Bessemer Mountain > North Bessemer Creek > Helm's Deep\t3\t-1\tLead\tFell/Hung\tSport\t\t75\t6900
-4/26/2026\tHobbit Chodes\t5.11b/c\t\thttps://www.mountainproject.com/route/124998682/hobbit-chodes\t1\tWashington > Central-West Cascades & Seattle > North Bend & Vicinity > Exit 34; Middle Fork & Taylor River > Bessemer Mountain > North Bessemer Creek > Helm's Deep\t2.4\t-1\tLead\t\tSport\t5.11c\t45\t5100
-4/25/2026\tButte-alicious\t5.10b\t\thttps://www.mountainproject.com/route/201171450/butte-alicious\t2\tWashington > Central-West Cascades & Seattle > North Bend & Vicinity > Exit 34; Middle Fork & Taylor River > Stegosaurus Butte > The Rump > The Butte-tresses\t3.1\t-1\tTR\t\tTrad\t\t200\t2900`;
-
-// --- App State ---
+﻿// --- App State ---
 let cardsData = [];
 let currentSlideIndex = 0;
 const slideDuration = 7000;
@@ -113,7 +61,7 @@ function getRequestedSeasonYear() {
     if (requested === 'currentYear') return currentSeasonYear;
     if (!/^\d{4}$/.test(requested || '')) return null;
     const year = Number(requested);
-    return year >= 2000 && year <= currentSeasonYear + 1 ? year : null;
+    return year >= 2005 && year <= currentSeasonYear + 1 ? year : null;
 }
 
 const requestedSeasonYear = getRequestedSeasonYear();
@@ -138,7 +86,50 @@ if (window.emailjs && !emailConfig.publicKey.startsWith('YOUR_')) {
     emailjs.init({ publicKey: emailConfig.publicKey });
 }
 
-document.getElementById('seasonLabel').textContent = `${activeSeasonYear} Edition`;
+const seasonToggle = document.getElementById('seasonToggle');
+const seasonDisplay = document.getElementById('seasonDisplay');
+const seasonList = document.getElementById('seasonList');
+const earliestSeasonYear = 2005;
+const latestSeasonYear = Math.max(currentSeasonYear, activeSeasonYear);
+for (let year = latestSeasonYear; year >= earliestSeasonYear; year--) {
+    const seasonOption = document.createElement('li');
+    seasonOption.className = 'season-option';
+    seasonOption.textContent = `${year}`;
+    seasonOption.setAttribute('role', 'option');
+    seasonOption.dataset.year = year;
+    if (year === activeSeasonYear) {
+        seasonOption.classList.add('is-active');
+        seasonOption.setAttribute('aria-selected', 'true');
+    }
+    seasonList.appendChild(seasonOption);
+}
+seasonDisplay.textContent = `${activeSeasonYear} Edition`;
+
+function closeSeasonList() {
+    seasonList.hidden = true;
+    seasonToggle.setAttribute('aria-expanded', 'false');
+}
+
+seasonToggle.addEventListener('click', event => {
+    event.stopPropagation();
+    const isOpen = !seasonList.hidden;
+    seasonList.hidden = isOpen;
+    seasonToggle.setAttribute('aria-expanded', String(!isOpen));
+});
+
+seasonList.addEventListener('click', event => {
+    const option = event.target.closest('.season-option');
+    if (!option) return;
+    window.location.href = `?year=${option.dataset.year}`;
+});
+
+document.addEventListener('click', event => {
+    if (!seasonList.hidden && !event.target.closest('#seasonDropdown')) closeSeasonList();
+});
+
+document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && !seasonList.hidden) closeSeasonList();
+});
 
 // --- Standard CSV Parser ---
 function parseCSV(text) {
@@ -411,6 +402,7 @@ function processTickList(ticks, targetSeasonYear = currentSeasonYear) {
     };
 
     const cragMap = {};
+    const cragAreas = {};
     const routeMap = {};
     const ratedRouteMap = new Map();
     let longestRoute = null;
@@ -562,7 +554,7 @@ function processTickList(ticks, targetSeasonYear = currentSeasonYear) {
                 && (!shortestRoute || length < shortestRoute.feet)) shortestRoute = routeStats;
         }
         if (routeName) {
-            if (!routeMap[routeName]) routeMap[routeName] = { ticks: 0, ...getRouteDetails(tick, notes) };
+            if (!routeMap[routeName]) routeMap[routeName] = { ticks: 0, difficulty: ratingCode || 0, ...getRouteDetails(tick, notes) };
             routeMap[routeName].ticks++;
         }
         if (/North Bend & Vicinity/i.test(location)) {
@@ -608,7 +600,7 @@ function processTickList(ticks, targetSeasonYear = currentSeasonYear) {
                 code: ratingCode,
                 grade: tick['Rating'] || 'Unknown',
                 name: tick['Route'] || 'Unknown Route',
-                location: getDeepestCrag(tick['Location'])
+                location: getAreaAndCrag(tick['Location'])
             };
         }
 
@@ -616,6 +608,7 @@ function processTickList(ticks, targetSeasonYear = currentSeasonYear) {
         const mainCrag = getDeepestCrag(tick['Location']);
         if (mainCrag) {
             cragMap[mainCrag] = (cragMap[mainCrag] || 0) + 1;
+            if (!cragAreas[mainCrag]) cragAreas[mainCrag] = getArea(tick['Location']);
         }
     });
 
@@ -633,14 +626,16 @@ function processTickList(ticks, targetSeasonYear = currentSeasonYear) {
     const topCrags = Object.entries(cragMap)
         .sort((a, b) => b[1] - a[1])
         .slice(0, 5)
-        .map(([name, count]) => ({ name, value: `${count} ${count === 1 ? 'tick' : 'ticks'}` }));
+        .map(([name, count]) => ({ name, subtext: cragAreas[name], value: `${count} ${count === 1 ? 'tick' : 'ticks'}` }));
 
     const favoriteRouteEntry = Object.entries(routeMap)
         .sort((a, b) => b[1].ticks - a[1].ticks);
     const favoriteRouteTicks = favoriteRouteEntry[0]?.[1].ticks || 0;
+    const tiedFavoriteEntries = favoriteRouteEntry.filter(([, route]) => route.ticks === favoriteRouteTicks);
     const favoriteRoutes = favoriteRouteTicks > 1
-        ? favoriteRouteEntry
-            .filter(([, route]) => route.ticks === favoriteRouteTicks)
+        ? (tiedFavoriteEntries.length > 5
+            ? [...tiedFavoriteEntries].sort((a, b) => b[1].difficulty - a[1].difficulty)
+            : tiedFavoriteEntries)
             .slice(0, 5)
             .map(([name, route]) => ({ ...route, name }))
         : [];
@@ -1147,12 +1142,18 @@ usernameInput.addEventListener('keydown', event => {
     if (event.key === 'Enter') fetchUserBtn.click();
 });
 
-demoBtn.addEventListener('click', () => {
-    const csvText = sampleData;
-    const rows = parseCSV(csvText);
-    const stats = processTickList(rows, activeSeasonYear);
-    persistWrappedHeatmapState(csvText, '');
-    startWrapped(stats, { csvText, profileUrl: '' });
+demoBtn.addEventListener('click', async () => {
+    try {
+        const response = await fetch('js/sample-ticks.csv');
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const csvText = await response.text();
+        const rows = parseCSV(csvText);
+        const stats = processTickList(rows, activeSeasonYear);
+        persistWrappedHeatmapState(csvText, '');
+        startWrapped(stats, { csvText, profileUrl: '' });
+    } catch (error) {
+        console.error('Failed to load sample data', error);
+    }
 });
 
 function applyRouteImages() {
@@ -1248,7 +1249,7 @@ function renderDeck() {
                 : '';
             const listItems = card.list.map((item, idx) => `
                 <div class="card-list-item">
-                    <span>${idx + 1}. ${item.name}</span>
+                    <span>${idx + 1}. ${item.name}${item.subtext ? `<small class="card-list-subtext">${item.subtext}</small>` : ''}</span>
                     <span>${wrapWithNiceSticker(item.value, item.value)}</span>
                 </div>
             `).join('');
@@ -1313,7 +1314,7 @@ function renderDeck() {
                 <div class="angry-card-content anim-element anim-3">
                     <strong>${card.angryMuch.name}</strong>
                     <span class="angry-grade">${card.angryMuch.grade}</span>
-                    <span class="route-crag">${getDeepestCrag(card.angryMuch.location)}</span>
+                    <span class="route-crag">${getAreaAndCrag(card.angryMuch.location)}</span>
                     <blockquote>"${card.angryMuch.note}"</blockquote>
                     <span class="intro-label">I'm sure that essay will help you send next time.</span>
                 </div>
@@ -1329,7 +1330,7 @@ function renderDeck() {
                     <span class="intro-label">YOU FELL (OR SCREAMED TAKE) ON...</span>
                     <strong>${card.gumbyMoment.name}</strong>
                     <span class="angry-grade">${card.gumbyMoment.grade}</span>
-                    <span class="route-crag">${getDeepestCrag(card.gumbyMoment.location)}</span>
+                    <span class="route-crag">${getAreaAndCrag(card.gumbyMoment.location)}</span>
                     ${noteMarkup}
                 </div>
             `;
@@ -1339,6 +1340,7 @@ function renderDeck() {
             innerHTML += `
                 <div class="favorite-route-content anim-element anim-3">
                     <strong>${card.favoriteRoutes[0].name} <small>${card.favoriteRoutes[0].grade}</small></strong>
+                    <span class="route-crag">${getAreaAndCrag(card.favoriteRoutes[0].location)}</span>
                     <span>${wrapWithNiceSticker(`${card.favoriteRoutes[0].ticks} ticks`, card.favoriteRoutes[0].ticks)}</span>
                 </div>
             `;
@@ -1347,7 +1349,7 @@ function renderDeck() {
         if (card.favoriteRoutes?.length > 1) {
             const favoriteItems = card.favoriteRoutes.map(route => `
                 <div class="card-list-item">
-                    <span>${route.name} <small>${route.grade}</small></span>
+                    <span>${route.name} <small>${route.grade}</small>${route.location ? `<small class="card-list-subtext">${getAreaAndCrag(route.location)}</small>` : ''}</span>
                     <span>${wrapWithNiceSticker(`${route.ticks} ticks`, route.ticks)}</span>
                 </div>
             `).join('');
@@ -1360,7 +1362,7 @@ function renderDeck() {
                     <strong>${card.routeStats.name}</strong>
                     <span id="route-pitches-${i}">0 pitches</span>
                     <span id="route-feet-${i}">0 feet</span>
-                    <span class="route-crag">${getDeepestCrag(card.routeStats.location)}</span>
+                    <span class="route-crag">${getAreaAndCrag(card.routeStats.location)}</span>
                 </div>
             `;
         }
@@ -1370,7 +1372,7 @@ function renderDeck() {
                 <div class="angry-card-content anim-element anim-3">
                     <strong>${card.saveForBlog.name}</strong>
                     <span class="angry-grade">${card.saveForBlog.grade}</span>
-                    <span class="route-crag">${getDeepestCrag(card.saveForBlog.location)}</span>
+                    <span class="route-crag">${getAreaAndCrag(card.saveForBlog.location)}</span>
                     <blockquote>"${card.saveForBlog.note}"</blockquote>
                 </div>
             `;
@@ -1385,7 +1387,7 @@ function renderDeck() {
                     <span class="intro-label">${starRouteIntro}</span>
                     <strong>${card.starRoute.name}</strong>
                     <span class="angry-grade">${starRouteDisplayRating}</span>
-                    <span class="route-crag">${getDeepestCrag(card.starRoute.location)}</span>
+                    <span class="route-crag">${getAreaAndCrag(card.starRoute.location)}</span>
                     ${card.starRoute.note ? `<blockquote>"${card.starRoute.note}"</blockquote>` : ''}
                 </div>
             `;
@@ -1409,7 +1411,7 @@ function renderDeck() {
                     <span class="intro-label">${phrase}</span>
                     <strong>${card.sandbagJudge.route.name}</strong>
                     <span class="angry-grade">${card.sandbagJudge.yourRating} <small style="font-size:1rem; opacity:0.8; font-weight:600;">(vs ${card.sandbagJudge.consensus})</small></span>
-                    <span class="route-crag">${getDeepestCrag(card.sandbagJudge.route.location)}</span>
+                    <span class="route-crag">${getAreaAndCrag(card.sandbagJudge.route.location)}</span>
                     ${card.sandbagJudge.route.note ? `<blockquote>"${card.sandbagJudge.route.note}"</blockquote>` : ''}
                 </div>
             `;
@@ -1673,6 +1675,76 @@ async function sendRopeEmail(event) {
         emailSubmit.disabled = false;
     }
 }
+
+// Press-and-hold pauses silently (no overlay or paused state) and resumes on release.
+const HOLD_PAUSE_DELAY_MS = 250;
+const HOLD_MOVE_TOLERANCE_PX = 12;
+let holdTimer = null;
+let holdPointerId = null;
+let holdOrigin = null;
+let isHoldPaused = false;
+let suppressNextClick = false;
+
+function cancelHoldTimer() {
+    clearTimeout(holdTimer);
+    holdTimer = null;
+}
+
+function endHold() {
+    cancelHoldTimer();
+    holdPointerId = null;
+    holdOrigin = null;
+    if (!isHoldPaused) return;
+    isHoldPaused = false;
+    isPaused = false;
+    startProgress();
+}
+
+document.addEventListener('pointerdown', event => {
+    suppressNextClick = false;
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+    if (pauseButton.hidden || isPaused || holdPointerId !== null) return;
+    if (event.target.closest('#pauseButton, .email-modal, .email-dialog, a, button, input, textarea')) return;
+
+    holdPointerId = event.pointerId;
+    holdOrigin = { x: event.clientX, y: event.clientY };
+    holdTimer = setTimeout(() => {
+        holdTimer = null;
+        if (isPaused) return;
+        progressElapsed += Date.now() - startTime;
+        clearInterval(progressInterval);
+        isPaused = true;
+        isHoldPaused = true;
+        suppressNextClick = true;
+    }, HOLD_PAUSE_DELAY_MS);
+});
+
+document.addEventListener('pointermove', event => {
+    if (event.pointerId !== holdPointerId || !holdTimer) return;
+    if (Math.hypot(event.clientX - holdOrigin.x, event.clientY - holdOrigin.y) > HOLD_MOVE_TOLERANCE_PX) {
+        cancelHoldTimer();
+        holdPointerId = null;
+    }
+});
+
+['pointerup', 'pointercancel'].forEach(type => {
+    document.addEventListener(type, event => {
+        if (event.pointerId !== holdPointerId) return;
+        endHold();
+        if (type === 'pointercancel') suppressNextClick = false;
+    });
+});
+
+document.addEventListener('click', event => {
+    if (!suppressNextClick) return;
+    suppressNextClick = false;
+    event.stopPropagation();
+    event.preventDefault();
+}, true);
+
+document.addEventListener('contextmenu', event => {
+    if (isHoldPaused) event.preventDefault();
+});
 
 // Navigation Events
 document.addEventListener('click', event => {

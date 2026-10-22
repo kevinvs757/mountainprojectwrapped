@@ -13,7 +13,12 @@
         <!-- Input / Landing Screen -->
         <div class="landing-screen active" id="landingScreen">
             <div class="landing-content">
-                <p class="subtitle" id="seasonLabel">Current Year Edition</p>
+                <div class="subtitle season-select-wrap" id="seasonDropdown">
+                    <button type="button" class="season-toggle" id="seasonToggle" aria-haspopup="listbox" aria-expanded="false">
+                        <span id="seasonDisplay">Current Year Edition</span>
+                    </button>
+                    <ul class="season-list" id="seasonList" role="listbox" tabindex="-1" hidden></ul>
+                </div>
                 <h1 class="title">Mountain Project<br>Wrapped</h1>
                 <p class="landing-intro" style="margin-bottom: 30px;">See your climbing year in review</p>
 

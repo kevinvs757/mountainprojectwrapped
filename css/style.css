@@ -123,6 +123,90 @@ body {
     margin-bottom: 4px;
 }
 
+.season-select-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.season-toggle {
+    appearance: none;
+    -webkit-appearance: none;
+    border: none;
+    outline: none;
+    background-color: transparent;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%2338bdf8' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0 center;
+    background-size: 9px 6px;
+    padding: 2px 16px 2px 0;
+    font: inherit;
+    color: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    cursor: pointer;
+}
+
+.season-toggle:hover,
+.season-toggle:focus-visible {
+    color: #7dd3fc;
+}
+
+.season-list {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    z-index: 50;
+    width: 100%;
+    max-height: 220px;
+    margin: 0;
+    padding: 6px 0;
+    list-style: none;
+    background: #0f172a;
+    border-radius: 10px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(125, 211, 252, 0.45) transparent;
+}
+
+.season-list::-webkit-scrollbar {
+    width: 5px;
+}
+
+.season-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.season-list::-webkit-scrollbar-thumb {
+    background: rgba(125, 211, 252, 0.45);
+    border-radius: 999px;
+}
+
+.season-list::-webkit-scrollbar-thumb:hover {
+    background: rgba(125, 211, 252, 0.65);
+}
+
+.season-list[hidden] {
+    display: none;
+}
+
+.season-option {
+    padding: 6px 16px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: #7dd3fc;
+    text-transform: none;
+    cursor: pointer;
+}
+
+.season-option:hover,
+.season-option.is-active {
+    color: #e0f2fe;
+    background: rgba(56, 189, 248, 0.15);
+}
+
 .input-card {
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.12);
@@ -205,6 +289,11 @@ body {
     transition: border-color 0.2s ease;
 }
 
+.input-group input::placeholder {
+    color: rgba(148, 163, 184, 0.18);
+    opacity: 1;
+}
+
 .input-group input:focus {
     border-color: #38bdf8;
 }
@@ -282,6 +371,8 @@ body {
     -webkit-tap-highlight-color: transparent;
     outline: none;
     user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
 }
 
 .nav-zone.left { left: 0; }
@@ -1051,6 +1142,26 @@ body {
 
 .card-list-item:last-child {
     border-bottom: none;
+}
+
+.card-list-item .card-list-subtext {
+    display: block;
+    margin-top: 1px;
+    overflow: hidden;
+    font-size: 0.72rem;
+    font-weight: 600;
+    line-height: 1.2;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    line-clamp: 2;
+    -webkit-line-clamp: 2;
+    text-overflow: ellipsis;
+}
+
+.card-list-item:has(.card-list-subtext) {
+    padding: 7px 0;
 }
 
 .hardest-list {

@@ -20,6 +20,34 @@ function getDeepestCrag(location) {
         .replace(/\bWest\b/gi, 'W.');
 }
 
+// Extensionless links rely on server rewrites; add .html when opened from disk.
+document.addEventListener('click', event => {
+    if (window.location.protocol !== 'file:' || event.defaultPrevented) return;
+    const link = event.target.closest && event.target.closest('a[href]');
+    const href = link && link.getAttribute('href');
+    if (!href || !/^heatmap(?:[?#]|$)/.test(href)) return;
+    event.preventDefault();
+    window.location.href = href.replace(/^heatmap/, 'heatmap.html');
+});
+
+function getArea(location) {
+    const levels = String(location || '')
+        .split('>')
+        .map(level => level.trim())
+        .filter(Boolean);
+    if (levels[0] && levels[0].toLowerCase() === 'international') {
+        return getArea(levels.slice(1).join(' > '));
+    }
+    const area = levels.length >= 5 ? levels[2] : levels[1];
+    return area || '';
+}
+
+function getAreaAndCrag(location) {
+    const area = getArea(location);
+    const crag = getDeepestCrag(location);
+    return area ? `${crag}, ${area}` : crag;
+}
+
 function isEligibleSend(tick) {
     const styles = String(tick.Style || tick['Style'] || '')
         .split(',')

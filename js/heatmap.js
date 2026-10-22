@@ -1,26 +1,3 @@
-const sampleHeatmapData = `Date,Route,Rating,Notes,URL,Pitches,Location,Avg Stars,Your Stars,Style,Lead Style,Route Type,Your Rating,Length,Rating Code
-2026-02-24,The Fun Place,5.10a,One of those perfect stoic days,https://example.com/route/1,1,Washington > North Bend > The Main Wall,3.6,-1,Lead,,Sport,,80,2600
-2026-03-02,The Other Place,5.11b,What a burner,https://example.com/route/2,1,Washington > North Bend > Another Wall,3.8,-1,Lead,,Sport,,90,4900
-2026-03-05,Choss Corner,5.8,Smoky and awful,https://example.com/route/3,1,Washington > North Bend > Dirt Wall,1.4,-1,Lead,,Sport,,60,2100
-2026-04-09,The Creak,5.9+,A little sandy,https://example.com/route/4,1,Washington > North Bend > Another Wall,2.6,-1,Lead,,Sport,,70,2500
-2026-05-16,Rampant,5.10c,Good movement,https://example.com/route/5,1,Oregon > The Gorge > Putnam,3.7,-1,Lead,,Sport,,85,3200
-2026-05-28,One More,5.10a/b,Worked quick,https://example.com/route/6,1,Washington > North Bend > The Main Wall,3.1,-1,Lead,,Sport,,75,2800
-2025-02-14,Steady Warmup,5.8,Really fun,https://example.com/route/7,1,Colorado > Front Range > Test,3.1,-1,Lead,,Sport,,60,2100
-2025-03-01,Long Day,5.12a,Cruxy,https://example.com/route/8,1,Colorado > Front Range > Test,3.3,-1,Lead,,Sport,,90,6600
-2025-06-20,Weekend Crag,5.10+,Mellow but polished,https://example.com/route/9,1,Washington > North Bend > Another Wall,4.2,-1,Lead,,Sport,,80,3300
-2025-07-03,Hold the Line,5.10d,Powerful,https://example.com/route/10,1,Washington > North Bend > Main Wall,3.5,-1,Lead,,Sport,,85,3500
-2024-08-06,Highball,V3,Simple and fun,https://example.com/route/11,1,California > Bishop > Test,3.2,-1,Boulder,,Boulder,,20,20300
-2024-09-18,Choss Bouldery,V1,Little slab,https://example.com/route/12,1,California > Bishop > Test,1.9,-1,Boulder,,Boulder,,18,20100
-2024-10-12,Deep Crack,5.9,Big old hands,https://example.com/route/13,1,Washington > North Bend > Backcountry,2.7,-1,Lead,,Trad,,60,2400
-2024-10-26,Big Time,5.11c,Strong day,https://example.com/route/14,1,Washington > North Bend > Rocky Side,3.9,-1,Lead,,Sport,,95,5200
-2024-11-11,Loose Scree,5.7,Quick rope,https://example.com/route/15,1,Oregon > The Gorge > Overlook,2.2,-1,Lead,,Trad,,40,1800
-2023-01-15,Winter Climb,5.10-,Cold and fun,https://example.com/route/16,1,Washington > Leavenworth > Crag,3.0,-1,Lead,,Trad,,85,2700
-2023-06-30,Laid Back,5.12b,Tough but rewarding,https://example.com/route/17,1,Washington > North Bend > Another Wall,3.8,-1,Lead,,Sport,,100,6900
-2023-07-19,Good Day,5.10c/d,Still sending,https://example.com/route/18,1,Washington > North Bend > Another Wall,3.9,-1,Lead,,Sport,,95,3400
-2022-05-07,Little Route,5.8,Easy but not bad,https://example.com/route/19,1,Washington > North Bend > False Start,2.7,-1,Lead,,Sport,,35,2100
-2022-09-16,Hefty Move,5.12-,Wanted to die,https://example.com/route/20,1,Washington > North Bend > Steep Wall,3.2,-1,Lead,,Sport,,85,6700
-2021-06-10,Flagging,5.11a/b,Made it look easy,https://example.com/route/21,1,California > Tahoe > Granite,3.1,-1,Lead,,Sport,,70,4800
-2021-07-08,Low Gauge,5.6,Maybe a warmup,https://example.com/route/22,1,Washington > North Bend > Easy Line,1.8,-1,Lead,,Trad,,25,1600`;
 
 const letterOrder = { a: 0, b: 1, c: 2, d: 3 };
 const GRADE_FAMILY_LABELS = {
@@ -287,7 +264,7 @@ function getCellClimbs(rows, year, grade) {
     return rows
         .filter((row) => getTickYear(row.Date) === year && normalizeGradeBucket(getOfficialGrade(row)) === grade)
         .map((row) => ({
-            area: getDeepestCrag(row.Location || row.location),
+            area: getAreaAndCrag(row.Location || row.location),
             name: String(row.Route || row.route || 'Unknown route'),
             grade: getOfficialGrade(row)
         }))
@@ -512,9 +489,16 @@ function handleCsvUpload(file) {
     reader.readAsText(file);
 }
 
-function initializeDemo() {
-    persistState(sampleHeatmapData, 'demo');
-    getHeatmapDataFromCsvText(sampleHeatmapData);
+async function initializeDemo() {
+    try {
+        const response = await fetch('js/sample-ticks.csv');
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const csvText = await response.text();
+        persistState(csvText, 'demo');
+        getHeatmapDataFromCsvText(csvText);
+    } catch (error) {
+        console.error('Failed to load sample data', error);
+    }
 }
 
 function showLanding() {
@@ -580,7 +564,7 @@ function boot() {
         getHeatmapDataFromCsvText(saved.csvText);
         if (urlParams.get('source') === 'wrapped' && canonicalizeProfileUrl(saved.profileUrl)) {
             trackFeatureAccess(saved.profileUrl, 'heatmap', 'wrapped-link');
-            window.history.replaceState({}, '', 'heatmap');
+            window.history.replaceState({}, '', window.location.protocol === 'file:' ? 'heatmap.html' : 'heatmap');
         }
         return;
     }
